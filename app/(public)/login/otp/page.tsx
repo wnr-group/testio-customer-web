@@ -2,14 +2,14 @@
 // Uses: supabase.auth.verifyOtp({ phone, token, type: 'sms' })
 'use client'
 import { useSearchParams } from "next/navigation"
-import { useState ,useRef, useEffect} from "react";
+import { useState ,useRef, useEffect, Suspense} from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function OtpPage() {
+function OtpPageContent() {
 
   const router = useRouter();
   const supabase = createClient();
@@ -20,17 +20,14 @@ export default function OtpPage() {
   const otpInputs = Array(6).fill("");
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  const canResend = countdown <= 0;
   const [loading, setLoading] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // timer
   useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
+    if (countdown <= 0) return;
     const timer = setInterval(() => {
       setCountdown((prev) => prev - 1);
     }, 1000);
@@ -141,7 +138,6 @@ export default function OtpPage() {
     if (!error) {
       toast.success("New OTP code sent!");
       setCountdown(60);
-      setCanResend(false);
       setOtp(Array(6).fill(""));
       inputRefs.current[0]?.focus(); // Refocus first field
     } else {
@@ -215,4 +211,16 @@ export default function OtpPage() {
     </div>
   );
 
+}
+
+export default function OtpPage() {
+  return (
+    <Suspense fallback={
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 z-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E8202A]"></div>
+      </div>
+    }>
+      <OtpPageContent />
+    </Suspense>
+  );
 }

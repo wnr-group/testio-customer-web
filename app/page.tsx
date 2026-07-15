@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LandingPageNavbar } from '@/components/layout/LandingPageNavbar'
+import Link from 'next/link'
 
 // Root "/" — redirect to /home if logged in, else show landing page
 export default async function RootPage() {
@@ -14,12 +15,12 @@ export default async function RootPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
       <h1 className="text-7xl font-bold text-[#E8202A]">TESTIO</h1>
       <p className="mt-2 text-lg text-[#666]">Taste of Native</p>
-      <a
+      <Link
         href="/login"
         className="mt-8 rounded-xl bg-[#E8202A] px-10 py-4 font-semibold text-white"
       >
         Order Now
-      </a>
+      </Link>
 
       <h1 className="text-5xl font-bold text-[#E8202A] my-7 mt-10 text-center md:text-left">
         How It Works
@@ -57,12 +58,12 @@ export default async function RootPage() {
         </div>
       </div>
 
-      <a
+      <Link
         href="/"
         className="mt-8 rounded-xl bg-[#1F2937] px-10 py-4 font-semibold text-white"
       >
         Become a Cook
-      </a>
+      </Link>
     </main>
   );
 }
