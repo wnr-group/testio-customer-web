@@ -47,12 +47,6 @@
   --radius-lg: 1rem;     /* 16px — cards */
   --radius-full: 9999px; /* chips/tags */
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
 }
 
 body {

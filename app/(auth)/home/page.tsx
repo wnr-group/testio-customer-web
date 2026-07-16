@@ -1,10 +1,386 @@
+"use client";
+
 // TODO (TES-168): Map/List toggle, nearby cook discovery, Mapbox GL JS
 // Stitch ref: "Homepage - TESTIO" + "Search & Discovery - TESTIO"
-// Map must be loaded via: dynamic(() => import('@/components/map/MapView'), { ssr: false })
+
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Map, List, Search, MapPin, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+import { CookCard } from "@/components/CookCard";
+import { DishCard } from "@/components/DishCard";
+import { useCartStore } from "@/stores/cartStore";
+import { reverseGeocode } from "@/lib/utils";
+
+
+// Dynamically import MapView (disabled during SSR to prevent issues with browser GL APIs)
+const MapView = dynamic(() => import("@/components/map/MapView"), { ssr: false });
+
+const CUISINES = [
+  "South Indian",
+  "North Indian",
+  "Chinese",
+  "Continental",
+  "Street Food",
+  "Desserts",
+];
+
+// Fallback coordinate default = Chennai (center of mock seeded cooks)
+const DEFAULT_COORDS = { lat: 13.0569, lng: 80.2437 };
+
+function HomeContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  const cartItemCount = useCartStore((s) => s.itemCount());
+
+  const viewMode = searchParams.get("view") || "list";
+  const [coordinates, setCoordinates] = useState(DEFAULT_COORDS);
+  const [addressInput, setAddressInput] = useState("Sector 5, Chennai");
+  
+  const [cooks, setCooks] = useState<any[]>([]);
+  const [dishes, setDishes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  // Get user's geolocation on mount, fallback to Chennai coords if blocked
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setCoordinates({ lat, lng });
+          
+          const address = await reverseGeocode(lat, lng);
+          if (address) {
+            setAddressInput(address);
+          } else {
+            setAddressInput("Chennai Central");
+          }
+        },
+        () => {
+          // Blocked or error - use default Chennai
+          setCoordinates(DEFAULT_COORDS);
+          setAddressInput("Nungambakkam, Chennai");
+        }
+      );
+    }
+  }, []);
+
+  // Fetch cooks and dishes when coordinates change
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const todayDate = new Date().toISOString().split("T")[0];
+        
+        // Fetch nearby cooks (10km radius)
+        const { data: cooksData, error: cooksError } = await supabase.rpc(
+          "get_nearby_cooks",
+          {
+            user_lat: coordinates.lat,
+            user_lng: coordinates.lng,
+            radius_meters: 10000,
+            today_date: todayDate,
+          }
+        );
+
+        if (cooksError) throw cooksError;
+        setCooks(cooksData || []);
+
+        // Fetch today's dishes from these cooks
+        if (cooksData && cooksData.length > 0) {
+          const cookIds = cooksData.map((c: any) => c.id);
+          const { data: dishesData, error: dishesError } = await supabase
+            .from("dishes")
+            .select(`
+              *,
+              cook_profiles (
+                kitchen_name
+              )
+            `)
+            .in("cook_id", cookIds)
+            .eq("is_available", true);
+
+          if (dishesError) throw dishesError;
+          setDishes(dishesData || []);
+        } else {
+          setDishes([]);
+        }
+      } catch (err: any) {
+        console.error("Error fetching homepage data:", err);
+        toast.error("Failed to load nearby cooks");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [coordinates, supabase]);
+
+  const handleToggleView = (mode: "map" | "list") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", mode);
+    router.push(`/home?${params.toString()}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push(`/home/search?location=${encodeURIComponent(addressInput)}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 pb-20">
+      {/* 1. Header/Hero Banner Section (Warm peach/cream gradient matching mockup) */}
+      <section className="bg-gradient-to-br from-[#FFF9F3] via-[#FFFDF9] to-[#FFF3E9] border-b border-slate-100 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 flex flex-col items-center text-center gap-6">
+          {/* Centered bold heading matching mockup font and sizing */}
+          <h1 className="text-3xl md:text-4xl lg:text-4.5xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-2xl">
+            Eat like a local. Order from home cooks <br className="hidden md:inline" /> near you.
+          </h1>
+
+          {/* Delivery Location Input Form (Rounded pill search bar matching mockup) */}
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-md mt-1">
+            <div className="flex items-center gap-2 p-1 bg-white rounded-full shadow-md border border-slate-100 pl-4 pr-1">
+              <div className="flex items-center gap-2 flex-1">
+                <MapPin className="size-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Enter your delivery location"
+                  className="w-full bg-transparent border-0 outline-none text-slate-800 text-xs placeholder:text-slate-400 py-2.5"
+                  value={addressInput}
+                  onChange={(e) => setAddressInput(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="bg-[#E8202A] hover:bg-[#c71821] text-white rounded-full px-5 py-2 font-bold text-xs transition-colors h-8">
+                Search
+              </Button>
+            </div>
+          </form>
+
+          {/* Cuisine quick chips (Light blue background chips matching mockup) */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-2 max-w-2xl">
+            {CUISINES.map((cuisine, idx) => (
+              <Link href={`/home/search?cuisine=${encodeURIComponent(cuisine)}`} key={idx}>
+                <Badge className="bg-[#DCE6F5] hover:bg-[#CAD9F0] text-slate-800 border-0 px-4 py-1.5 rounded-full text-xs font-bold shadow-none transition-all cursor-pointer">
+                  {cuisine}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Map / List View Toggle Bar */}
+      <div className="mx-auto max-w-7xl px-4 py-6 flex items-center justify-between border-b border-slate-100">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+            Home Cooks Around You
+          </h2>
+          <p className="text-slate-400 text-xs mt-0.5">
+            Discovering available kitchens within 10 km
+          </p>
+        </div>
+
+        {/* Toggle Controls */}
+        <div className="flex items-center bg-slate-100 border border-slate-200 p-1 rounded-xl">
+          <Button
+            onClick={() => handleToggleView("list")}
+            variant={viewMode === "list" ? "default" : "ghost"}
+            size="sm"
+            className={`rounded-lg px-3 py-1 flex items-center gap-1.5 text-xs font-semibold h-8 ${
+              viewMode === "list"
+                ? "bg-white text-slate-800 shadow-sm border border-slate-200/50 hover:bg-white"
+                : "text-slate-500 hover:text-slate-800 hover:bg-transparent"
+            }`}
+          >
+            <List className="size-3.5" />
+            List
+          </Button>
+          <Button
+            onClick={() => handleToggleView("map")}
+            variant={viewMode === "map" ? "default" : "ghost"}
+            size="sm"
+            className={`rounded-lg px-3 py-1 flex items-center gap-1.5 text-xs font-semibold h-8 ${
+              viewMode === "map"
+                ? "bg-white text-slate-800 shadow-sm border border-slate-200/50 hover:bg-white"
+                : "text-slate-500 hover:text-slate-800 hover:bg-transparent"
+            }`}
+          >
+            <Map className="size-3.5" />
+            Map
+          </Button>
+        </div>
+      </div>
+
+      {/* 3. Rendering Content: Map View vs List View */}
+      <div className="mx-auto max-w-7xl px-4 mt-6">
+        {viewMode === "map" ? (
+          /* ==================== MAP VIEW SKELETON ==================== */
+          <div className="w-full aspect-[2/1] min-h-[400px] border border-slate-200 rounded-3xl bg-white shadow-sm overflow-hidden relative">
+            <MapView center={[coordinates.lng, coordinates.lat]} className="w-full h-full" />
+            {/* Location marker indicator info overlay */}
+            <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-slate-100 flex flex-col gap-1 max-w-[280px]">
+              <span className="text-xs font-bold text-[#E8202A] flex items-center gap-1">
+                <MapPin className="size-3.5 shrink-0" /> Local Map Loaded
+              </span>
+              <p className="text-slate-800 font-semibold text-sm">
+                Centred near Nungambakkam, Chennai
+              </p>
+              <p className="text-slate-400 text-[11px] leading-relaxed">
+                Mock cooks are seeded in this coordinates range. Geolocation matches markers locally.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* ==================== LIST VIEW CONTENT ==================== */
+          <div className="flex flex-col gap-12">
+            {/* Section A: Popular Cooks */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg md:text-xl font-bold text-slate-800">
+                  Popular Cooks
+                </h3>
+                <Link
+                  href="/home/search?view=list"
+                  className="text-xs font-semibold text-[#E8202A] hover:underline flex items-center gap-1"
+                >
+                  View All <ArrowRight className="size-3" />
+                </Link>
+              </div>
+
+              {loading ? (
+                /* Skeletal Grid Loader */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {Array(4)
+                    .fill(0)
+                    .map((_, idx) => (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <Skeleton className="w-full aspect-[16/9] rounded-2xl" />
+                        <Skeleton className="h-5 w-3/4 rounded-md" />
+                        <Skeleton className="h-4 w-1/2 rounded-md" />
+                      </div>
+                    ))}
+                </div>
+              ) : cooks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <MapPin className="size-10 text-slate-300 mb-2" />
+                  <p className="text-slate-600 font-medium">No cooks found nearby</p>
+                  <p className="text-slate-400 text-xs mt-1 text-center">
+                    Make sure geolocation permissions are enabled or click quick search chips.
+                  </p>
+                </div>
+              ) : (
+                /* Cook Profiles Grid (Without action button to match mockup) */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {cooks.map((cook) => (
+                    <CookCard key={cook.id} cook={cook} showButton={false} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+
+            {/* Section B: What's Cooking Today (Dishes) */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-slate-800">
+                  What&apos;s Cooking Today
+                </h3>
+                <Link
+                  href="/home/search?toggle=dishes"
+                  className="text-xs font-semibold text-[#E8202A] hover:underline flex items-center gap-1"
+                >
+                  View All Dishes <ArrowRight className="size-3" />
+                </Link>
+              </div>
+
+              {loading ? (
+                /* Skeletal Grid Loader */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {Array(4)
+                    .fill(0)
+                    .map((_, idx) => (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <Skeleton className="w-full aspect-[4/3] rounded-2xl" />
+                        <Skeleton className="h-5 w-3/4 rounded-md" />
+                        <Skeleton className="h-4 w-1/4 rounded-md" />
+                      </div>
+                    ))}
+                </div>
+              ) : dishes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <p className="text-slate-600 font-medium">No dishes available today</p>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Try checking again later or exploring other cooks.
+                  </p>
+                </div>
+              ) : (
+                /* Dishes Grid */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {dishes.slice(0, 8).map((dish) => (
+                    <DishCard key={dish.id} dish={dish} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4. Global Floating Shopping Cart Link */}
+      {mounted && cartItemCount > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Link href="/cart">
+            <Button className="bg-[#E8202A] hover:bg-[#c71821] text-white shadow-xl rounded-full p-4 h-14 w-14 flex items-center justify-center relative transition-transform hover:scale-105 active:scale-95">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                />
+              </svg>
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white shadow-md">
+                {cartItemCount}
+              </span>
+            </Button>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
-    <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-      <p className="text-[#666]">Home — Cook Discovery (TES-168)</p>
-    </div>
-  )
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-slate-50">
+          <p className="text-slate-400 text-sm">Loading TESTIO...</p>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
+  );
 }
+
