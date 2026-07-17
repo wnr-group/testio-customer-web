@@ -73,12 +73,18 @@ export const useCartStore = create<CartState>()(
         if (version < 1 && persistedState && typeof persistedState === 'object') {
           const state = persistedState as any;
           if (Array.isArray(state.items)) {
-            state.items = state.items.map((item: any) => ({
-              ...item,
-              max_quantity: typeof item.max_quantity === 'number' ? item.max_quantity : 10,
-              qty: typeof item.qty === 'number' ? item.qty : 1,
-              price: typeof item.price === 'number' ? item.price : 0,
-            }));
+            state.items = state.items.map((item: any) => {
+              const qtyNum = typeof item.qty === 'number' ? item.qty : Number(item.qty);
+              const priceNum = typeof item.price === 'number' ? item.price : Number(item.price);
+              const maxQtyNum = typeof item.max_quantity === 'number' ? item.max_quantity : Number(item.max_quantity);
+
+              return {
+                ...item,
+                qty: !isNaN(qtyNum) ? qtyNum : 1,
+                price: !isNaN(priceNum) ? priceNum : 0,
+                max_quantity: !isNaN(maxQtyNum) ? maxQtyNum : 10,
+              };
+            });
           }
           return state;
         }
