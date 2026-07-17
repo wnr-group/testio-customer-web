@@ -31,9 +31,11 @@ export const useCartStore = create<CartState>()(
 
       addItem: (cookId, cookName, item) => {
         const state = get()
+        const normalizedItem = { ...item, qty: Math.min(item.qty, item.max_quantity) }
+
         // If adding from a different cook, replace cart
         if (state.cookId && state.cookId !== cookId) {
-          set({ cookId, cookName, items: [item] })
+          set({ cookId, cookName, items: [normalizedItem] })
           return
         }
         const existing = state.items.find((i) => i.dishId === item.dishId)
@@ -44,7 +46,7 @@ export const useCartStore = create<CartState>()(
             ),
           })
         } else {
-          set({ cookId, cookName, items: [...state.items, item] })
+          set({ cookId, cookName, items: [...state.items, normalizedItem] })
         }
       },
 
@@ -64,6 +66,24 @@ export const useCartStore = create<CartState>()(
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.qty, 0),
     }),
-    { name: 'testio-cart' }
+    {
+      name: 'testio-cart',
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 1 && persistedState && typeof persistedState === 'object') {
+          const state = persistedState as any;
+          if (Array.isArray(state.items)) {
+            state.items = state.items.map((item: any) => ({
+              ...item,
+              max_quantity: typeof item.max_quantity === 'number' ? item.max_quantity : 10,
+              qty: typeof item.qty === 'number' ? item.qty : 1,
+              price: typeof item.price === 'number' ? item.price : 0,
+            }));
+          }
+          return state;
+        }
+        return persistedState;
+      }
+    }
   )
 )
