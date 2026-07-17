@@ -96,9 +96,17 @@ function OtpPageContent() {
   const handleClickVerify = async (e:React.FormEvent) => {
     e.preventDefault();
 
-    setLoading(true);
-
     const code = otp.join("");
+    if (!phone || code.length !== 6) {
+      if (!phone) {
+        toast.error("Phone number is missing. Please restart the login process.");
+      } else {
+        toast.error("Please enter a complete 6-digit OTP code.");
+      }
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
