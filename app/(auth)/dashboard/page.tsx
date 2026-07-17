@@ -59,6 +59,7 @@ export default function DashboardPage() {
   // State Management
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [realOrders, setRealOrders] = useState<any[]>([]);
@@ -84,9 +85,9 @@ export default function DashboardPage() {
           .single();
 
         if (profile && profile.name) {
-          // Returning user: skip dashboard onboarding and go directly to /home
-          router.push("/home");
-          return;
+          setProfileName(profile.name);
+        } else {
+          setProfileName("");
         }
 
         // 3. First time user: fetch any existing orders (likely empty, but good to check)
@@ -131,6 +132,7 @@ export default function DashboardPage() {
       if (error) throw error;
 
       toast.success("Profile completed successfully!");
+      setProfileName(nameInput.trim());
       router.push("/home");
     } catch (err: any) {
       toast.error(err.message || "Failed to complete profile");
@@ -177,10 +179,10 @@ export default function DashboardPage() {
         status_label: o.status === "out_for_delivery" ? "Out for Delivery" : o.status === "completed" ? "Delivered" : o.status.toUpperCase(),
         time_label: new Date(o.created_at).toLocaleDateString(),
         total_amount: o.total_amount,
-        items: [], // Detail items might need another join; fallback to basic representation
+        items: [] as { name: string; price: number }[], // Detail items might need another join; fallback to basic representation
         image_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=60"
       }))
-    : MOCK_ORDERS;
+    : [];
 
   // Filter orders by Active (pending, accepted, preparing, ready, out_for_delivery) vs Past (completed, cancelled)
   const filteredOrders = displayOrders.filter((o) => {
@@ -244,38 +246,40 @@ export default function DashboardPage() {
         <main className="flex-1 flex flex-col gap-6 w-full">
           
           {/* 1. Onboarding Form (Only for first-time users completing profile) */}
-          <section className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col gap-1 text-center md:text-left">
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-                Welcome to TESTIO!
-              </h2>
-              <p className="text-slate-500 text-xs font-semibold leading-relaxed">
-                Save your name below to complete your profile and start ordering.
-              </p>
-            </div>
+          {!profileName && (
+            <section className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col gap-1 text-center md:text-left">
+                <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+                  Welcome to TESTIO!
+                </h2>
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                  Save your name below to complete your profile and start ordering.
+                </p>
+              </div>
 
-            <form onSubmit={handleSaveProfile} className="w-full md:w-auto flex flex-col sm:flex-row gap-3 items-center shrink-0">
-              <Input
-                type="text"
-                placeholder="Enter your name"
-                className="w-full sm:w-56 px-3.5 py-2 border-slate-200 rounded-xl text-xs font-semibold placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#D61A22] focus:border-[#D61A22] bg-white h-9"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                disabled={savingName}
-              />
-              <Button 
-                type="submit" 
-                className="w-full sm:w-auto bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl px-5 py-2 font-bold text-xs tracking-wider transition-colors h-9 shrink-0 shadow-sm"
-                disabled={savingName}
-              >
-                {savingName ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  "Save Profile"
-                )}
-              </Button>
-            </form>
-          </section>
+              <form onSubmit={handleSaveProfile} className="w-full md:w-auto flex flex-col sm:flex-row gap-3 items-center shrink-0">
+                <Input
+                  type="text"
+                  placeholder="Enter your name"
+                  className="w-full sm:w-56 px-3.5 py-2 border-slate-200 rounded-xl text-xs font-semibold placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#D61A22] focus:border-[#D61A22] bg-white h-9"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  disabled={savingName}
+                />
+                <Button 
+                  type="submit" 
+                  className="w-full sm:w-auto bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl px-5 py-2 font-bold text-xs tracking-wider transition-colors h-9 shrink-0 shadow-sm"
+                  disabled={savingName}
+                >
+                  {savingName ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    "Save Profile"
+                  )}
+                </Button>
+              </form>
+            </section>
+          )}
 
           {/* 2. Order History Header and Tabs */}
           <section className="flex flex-col gap-5">

@@ -16,6 +16,7 @@ export interface Dish {
   image_url: string | null;
   is_available: boolean;
   max_quantity: number;
+  dietary_status?: string | null;
   cook_profiles?: {
     kitchen_name: string;
   };
@@ -41,10 +42,10 @@ export function DishCard({ dish }: DishCardProps) {
   const cartItem = cartItems.find((i) => i.dishId === dish.id);
   const qty = cartItem ? cartItem.qty : 0;
 
-  // Determine Veg vs Non-Veg based on keyword search
-  const isVeg = !/(chicken|fish|meat|mutton|beef|egg|pork|shrimp|prawn|crab|lamb|bacon|salami|momo)/i.test(
-    dish.name
-  );
+  const isVeg = dish.dietary_status
+    ? !dish.dietary_status.toLowerCase().includes("non") &&
+      dish.dietary_status.toLowerCase().includes("veg")
+    : false;
 
   const handleAdd = () => {
     const kitchenName = dish.cook_profiles?.kitchen_name || "Home Cook";
@@ -63,11 +64,16 @@ export function DishCard({ dish }: DishCardProps) {
       price: dish.price,
       qty: 1,
       imageUrl: dish.image_url || undefined,
+      max_quantity: dish.max_quantity,
     });
     toast.success(`Added ${dish.name} to cart`);
   };
 
   const handleIncrement = () => {
+    if (qty >= dish.max_quantity) {
+      toast.error(`Maximum quantity of ${dish.max_quantity} reached`);
+      return;
+    }
     updateQty(dish.id, qty + 1);
   };
 
@@ -91,20 +97,22 @@ export function DishCard({ dish }: DishCardProps) {
         />
 
         {/* Capsule Veg / Non-Veg Indicator Badge */}
-        <div className="absolute top-3 left-3 bg-white/95 px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1.5 border border-slate-100">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              isVeg ? "bg-[#2DB34A]" : "bg-[#D32F2F]"
-            }`}
-          />
-          <span
-            className={`text-[9px] font-extrabold ${
-              isVeg ? "text-[#2DB34A]" : "text-[#D32F2F]"
-            }`}
-          >
-            {isVeg ? "VEG" : "NON-VEG"}
-          </span>
-        </div>
+        {dish.dietary_status && (
+          <div className="absolute top-3 left-3 bg-white/95 px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1.5 border border-slate-100">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isVeg ? "bg-[#2DB34A]" : "bg-[#D32F2F]"
+              }`}
+            />
+            <span
+              className={`text-[9px] font-extrabold ${
+                isVeg ? "text-[#2DB34A]" : "text-[#D32F2F]"
+              }`}
+            >
+              {dish.dietary_status.toUpperCase()}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Card Details */}
@@ -143,6 +151,7 @@ export function DishCard({ dish }: DishCardProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleDecrement}
+                aria-label={`Decrease ${dish.name}`}
                 className="w-7 h-7 rounded-none hover:bg-slate-100"
               >
                 <Minus className="size-3 text-slate-600" />
@@ -152,7 +161,9 @@ export function DishCard({ dish }: DishCardProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleIncrement}
-                className="w-7 h-7 rounded-none hover:bg-slate-100"
+                disabled={qty >= dish.max_quantity}
+                aria-label={`Increase ${dish.name}`}
+                className="w-7 h-7 rounded-none hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="size-3 text-slate-600" />
               </Button>
@@ -161,6 +172,7 @@ export function DishCard({ dish }: DishCardProps) {
             /* Circular Pink Plus Action Button */
             <button
               onClick={handleAdd}
+              aria-label={`Add ${dish.name} to cart`}
               className="w-8 h-8 rounded-full bg-[#FEECEF] hover:bg-[#FCD7DC] text-[#E8202A] flex items-center justify-center transition-all font-extrabold text-lg shadow-sm border border-transparent hover:scale-105 active:scale-95"
             >
               +

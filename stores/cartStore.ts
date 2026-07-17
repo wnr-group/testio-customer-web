@@ -7,6 +7,7 @@ export type CartItem = {
   price: number
   qty: number
   imageUrl?: string
+  max_quantity: number
 }
 
 type CartState = {
@@ -39,7 +40,7 @@ export const useCartStore = create<CartState>()(
         if (existing) {
           set({
             items: state.items.map((i) =>
-              i.dishId === item.dishId ? { ...i, qty: i.qty + item.qty } : i
+              i.dishId === item.dishId ? { ...i, qty: Math.min(i.qty + item.qty, i.max_quantity) } : i
             ),
           })
         } else {
@@ -51,7 +52,7 @@ export const useCartStore = create<CartState>()(
         set((s) => ({
           items: qty <= 0
             ? s.items.filter((i) => i.dishId !== dishId)
-            : s.items.map((i) => (i.dishId === dishId ? { ...i, qty } : i)),
+            : s.items.map((i) => (i.dishId === dishId ? { ...i, qty: Math.min(qty, i.max_quantity) } : i)),
         })),
 
       removeItem: (dishId) =>

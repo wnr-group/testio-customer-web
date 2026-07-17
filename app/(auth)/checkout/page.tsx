@@ -134,6 +134,27 @@ export default function CheckoutPage() {
 
     setSubmittingOrder(true);
     try {
+      // Validate max_quantity limit from database before creating order
+      const dishIds = items.map((i) => i.dishId);
+      const { data: dbDishes, error: fetchError } = await supabase
+        .from("dishes")
+        .select("id, name, max_quantity")
+        .in("id", dishIds);
+
+      if (fetchError || !dbDishes) {
+        throw new Error(fetchError?.message || "Failed to validate dish quantities.");
+      }
+
+      for (const item of items) {
+        const dbDish = dbDishes.find((d) => d.id === item.dishId);
+        if (!dbDish) {
+          throw new Error(`Dish "${item.name}" is no longer available.`);
+        }
+        if (item.qty > dbDish.max_quantity) {
+          throw new Error(`Requested quantity for "${item.name}" exceeds the maximum limit of ${dbDish.max_quantity}.`);
+        }
+      }
+
       // 1. Create order record
       const randomArr = new Uint32Array(1);
       crypto.getRandomValues(randomArr);
@@ -284,13 +305,14 @@ export default function CheckoutPage() {
                               <Minus className="size-3" />
                             </button>
                             <span className="w-6 text-center text-xs font-bold text-slate-800">{item.qty}</span>
-                            <button
-                              onClick={() => updateQty(item.dishId, item.qty + 1)}
-                              className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
-                            >
-                              <Plus className="size-3" />
-                            </button>
-                          </div>
+                             <button
+                               onClick={() => updateQty(item.dishId, item.qty + 1)}
+                               disabled={item.qty >= item.max_quantity}
+                               className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                             >
+                               <Plus className="size-3" />
+                             </button>
+                           </div>
                         </div>
                       </div>
 
@@ -321,29 +343,47 @@ export default function CheckoutPage() {
               </div>
               
               {/* Delivery Type Selector pills tab */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/50 w-full md:w-fit">
-                <button
-                  onClick={() => setDeliveryType("delivery")}
-                  className={`flex-1 md:flex-initial px-6 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              <div 
+                role="radiogroup" 
+                aria-label="Delivery Type"
+                className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/50 w-full md:w-fit"
+              >
+                <label
+                  className={`flex-1 md:flex-initial px-6 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer relative focus-within:ring-2 focus-within:ring-[#D61A22] ${
                     deliveryType === "delivery"
                       ? "bg-white text-[#D61A22] shadow-sm border border-slate-200/20"
                       : "text-slate-500 hover:text-slate-800 bg-transparent"
                   }`}
                 >
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value="delivery"
+                    checked={deliveryType === "delivery"}
+                    onChange={() => setDeliveryType("delivery")}
+                    className="sr-only"
+                  />
                   <Bike className="size-3.5" />
-                  Delivery
-                </button>
-                <button
-                  onClick={() => setDeliveryType("pickup")}
-                  className={`flex-1 md:flex-initial px-6 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  <span>Delivery</span>
+                </label>
+                <label
+                  className={`flex-1 md:flex-initial px-6 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer relative focus-within:ring-2 focus-within:ring-[#D61A22] ${
                     deliveryType === "pickup"
                       ? "bg-white text-[#D61A22] shadow-sm border border-slate-200/20"
                       : "text-slate-500 hover:text-slate-800 bg-transparent"
                   }`}
                 >
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value="pickup"
+                    checked={deliveryType === "pickup"}
+                    onChange={() => setDeliveryType("pickup")}
+                    className="sr-only"
+                  />
                   <Clock className="size-3.5" />
-                  Pickup
-                </button>
+                  <span>Pickup</span>
+                </label>
               </div>
 
               {/* Delivery Address Details */}
@@ -374,19 +414,26 @@ export default function CheckoutPage() {
                       </Link>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3">
+                    <div role="radiogroup" aria-label="Delivery Address" className="grid grid-cols-1 gap-3">
                       {addresses.map((addr) => {
                         const isSelected = deliveryAddressId === addr.id;
                         return (
-                          <div
+                          <label
                             key={addr.id}
-                            onClick={() => setDeliveryAddressId(addr.id)}
-                            className={`border rounded-xl p-4 cursor-pointer transition-all flex items-start gap-4 bg-white ${
+                            className={`border rounded-xl p-4 cursor-pointer transition-all flex items-start gap-4 bg-white relative focus-within:ring-2 focus-within:ring-[#C29B38] ${
                               isSelected
                                 ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
                                 : "border-slate-100 hover:border-slate-250"
                             }`}
                           >
+                            <input
+                              type="radio"
+                              name="deliveryAddress"
+                              value={addr.id}
+                              checked={isSelected}
+                              onChange={() => setDeliveryAddressId(addr.id)}
+                              className="sr-only"
+                            />
                             <div className={`p-2 rounded-lg shrink-0 ${isSelected ? "text-[#C29B38]" : "text-slate-400"}`}>
                               {addr.label === "Work" || addr.label === "Other" ? (
                                 <Briefcase className="size-5" />
@@ -407,7 +454,7 @@ export default function CheckoutPage() {
                                 {addr.address_line}
                               </p>
                             </div>
-                          </div>
+                          </label>
                         );
                       })}
                     </div>
@@ -417,25 +464,31 @@ export default function CheckoutPage() {
                 // Pickup time selector slots layout
                 <div className="flex flex-col gap-4">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Pickup Time Slot</span>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div role="radiogroup" aria-label="Pickup Time Slot" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PICKUP_SLOTS.map((slot) => {
                       const isSelected = pickupTime === slot;
                       return (
-                        <div
+                        <label
                           key={slot}
-                          onClick={() => setPickupTime(slot)}
-                          className={`border rounded-xl p-4 cursor-pointer transition-all flex items-center gap-3 bg-white ${
+                          className={`border rounded-xl p-4 cursor-pointer transition-all flex items-center gap-3 bg-white focus-within:ring-2 focus-within:ring-[#C29B38] ${
                             isSelected
                               ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
                               : "border-slate-100 hover:border-slate-200"
                           }`}
                         >
+                          <input
+                            type="radio"
+                            name="pickupTime"
+                            value={slot}
+                            checked={isSelected}
+                            onChange={() => setPickupTime(slot)}
+                            className="sr-only"
+                          />
                           <Clock className={`size-4 shrink-0 ${isSelected ? "text-[#C29B38]" : "text-slate-400"}`} />
                           <span className={`text-xs font-bold ${isSelected ? "text-slate-850" : "text-slate-600"}`}>
                             {slot}
                           </span>
-                        </div>
+                        </label>
                       );
                     })}
                   </div>
@@ -446,45 +499,66 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-4 pt-4 border-t border-slate-50">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Payment Method</span>
                 
-                <div className="grid grid-cols-3 gap-3">
+                <div role="radiogroup" aria-label="Payment Method" className="grid grid-cols-3 gap-3">
                   {/* UPI */}
-                  <div
-                    onClick={() => setPaymentMethod("upi")}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white ${
+                  <label
+                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white focus-within:ring-2 focus-within:ring-[#C29B38] ${
                       paymentMethod === "upi"
                         ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
                         : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="upi"
+                      checked={paymentMethod === "upi"}
+                      onChange={() => setPaymentMethod("upi")}
+                      className="sr-only"
+                    />
                     <CreditCard className={`size-5 shrink-0 ${paymentMethod === "upi" ? "text-[#C29B38]" : "text-slate-400"}`} />
                     <span className="text-xs font-bold text-slate-750">UPI</span>
-                  </div>
+                  </label>
 
                   {/* Card */}
-                  <div
-                    onClick={() => setPaymentMethod("card")}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white ${
+                  <label
+                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white focus-within:ring-2 focus-within:ring-[#C29B38] ${
                       paymentMethod === "card"
                         ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
                         : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={paymentMethod === "card"}
+                      onChange={() => setPaymentMethod("card")}
+                      className="sr-only"
+                    />
                     <CreditCard className={`size-5 shrink-0 ${paymentMethod === "card" ? "text-[#C29B38]" : "text-slate-400"}`} />
                     <span className="text-xs font-bold text-slate-750">Card</span>
-                  </div>
+                  </label>
 
                   {/* Cash */}
-                  <div
-                    onClick={() => setPaymentMethod("cash")}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white ${
+                  <label
+                    className={`border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 bg-white focus-within:ring-2 focus-within:ring-[#C29B38] ${
                       paymentMethod === "cash"
                         ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
                         : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cash"
+                      checked={paymentMethod === "cash"}
+                      onChange={() => setPaymentMethod("cash")}
+                      className="sr-only"
+                    />
                     <CreditCard className={`size-5 shrink-0 ${paymentMethod === "cash" ? "text-[#C29B38]" : "text-slate-400"}`} />
                     <span className="text-xs font-bold text-slate-750">Cash</span>
-                  </div>
+                  </label>
                 </div>
               </div>
 

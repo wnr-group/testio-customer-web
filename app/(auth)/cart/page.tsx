@@ -104,6 +104,7 @@ export default function CartPage() {
                       <div className="flex items-center bg-slate-50 border border-slate-200/50 rounded-xl p-0.5 h-8">
                         <button
                           onClick={() => updateQty(item.dishId, item.qty - 1)}
+                          aria-label={`Decrease quantity of ${item.name}`}
                           className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
                         >
                           <Minus className="size-3" />
@@ -111,7 +112,9 @@ export default function CartPage() {
                         <span className="w-6 text-center text-xs font-bold text-slate-800">{item.qty}</span>
                         <button
                           onClick={() => updateQty(item.dishId, item.qty + 1)}
-                          className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
+                          disabled={item.qty >= item.max_quantity}
+                          aria-label={`Increase quantity of ${item.name}`}
+                          className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           <Plus className="size-3" />
                         </button>
@@ -120,6 +123,7 @@ export default function CartPage() {
                       {/* Remove Button */}
                       <button
                         onClick={() => removeItem(item.dishId)}
+                        aria-label={`Remove ${item.name} from cart`}
                         className="text-slate-400 hover:text-[#D61A22] transition-colors p-1"
                         title="Remove item"
                       >

@@ -112,12 +112,11 @@ export function CookCard({ cook, showButton = true }: CookCardProps) {
           {/* VIEW MENU button (Only shown in search results, styled as a nested content element) */}
           {showButton && (
             <div className="w-full mt-1.5">
-              <Button
-                variant="outline"
-                className="w-full border-[#E8202A] text-[#E8202A] group-hover:bg-[#E8202A] group-hover:text-white rounded-xl transition-colors font-bold py-1 h-9 text-xs"
+              <div
+                className="w-full inline-flex shrink-0 items-center justify-center border border-[#E8202A] bg-transparent text-[#E8202A] group-hover:bg-[#E8202A] group-hover:text-white rounded-xl transition-colors font-bold py-1 h-9 text-xs select-none"
               >
                 VIEW MENU
-              </Button>
+              </div>
             </div>
           )}
         </div>
