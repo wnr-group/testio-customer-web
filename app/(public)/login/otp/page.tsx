@@ -45,14 +45,18 @@ function OtpPageContent() {
   // focus next block
   const handleChange = (value: string, index: number) => {
     const cleanValue = value.replace(/\D/g, "");
-    if (!cleanValue) return;
-
     const newOtp = [...otp];
+
+    if (!cleanValue) {
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
+    }
+
     newOtp[index] = cleanValue.substring(cleanValue.length - 1);
     setOtp(newOtp);
 
-    if (index < 5 && cleanValue)
-    {
+    if (index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
