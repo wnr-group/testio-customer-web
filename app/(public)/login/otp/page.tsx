@@ -14,8 +14,14 @@ function OtpPageContent() {
   const router = useRouter();
   const supabase = createClient();
 
-  const searchParams = useSearchParams();
-  const phone = searchParams.get("phone") || "";
+  const [phone, setPhone] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPhone(sessionStorage.getItem("login_phone") || "");
+    }
+  }, []);
 
   const otpInputs = Array(6).fill("");
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));

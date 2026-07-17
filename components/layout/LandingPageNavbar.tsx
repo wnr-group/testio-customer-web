@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 
 export function LandingPageNavbar() {
 
@@ -32,18 +32,32 @@ export function LandingPageNavbar() {
           </Link>
         </nav>
 
+        {/* Mobile nav fallback */}
+        <nav className="flex items-center gap-4 md:hidden">
+          <Link
+            href="/home"
+            className="text-xs font-semibold text-[--color-text-secondary] hover:text-[--color-brand-primary]"
+          >
+            Discover
+          </Link>
+          <Link
+            href="/orders"
+            className="text-xs font-semibold text-[--color-text-secondary] hover:text-[--color-brand-primary]"
+          >
+            My Orders
+          </Link>
+        </nav>
+
         {/* Right actions */}
         <div className="flex items-center gap-3">
-          {/* Cart */}
-         
           {/* Profile */}
-          <Link href="/profile">
-            <Button variant="ghost" size="icon">
-              
-            </Button>
+          <Link 
+            href="/profile"
+            aria-label="Profile"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-slate-100 hover:text-slate-900 h-9 w-9"
+          >
+            <User className="h-4 w-4 text-slate-500" />
           </Link>
-
-         
         </div>
       </div>
     </header>

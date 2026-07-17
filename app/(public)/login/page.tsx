@@ -40,8 +40,8 @@ export default function LoginPage() {
       }
 
       toast.success("OTP sent successfully!")
-      router.push(`/login/otp?phone=${encodeURIComponent(formattedPhone)}`);
-
+      sessionStorage.setItem("login_phone", formattedPhone);
+      router.push("/login/otp");
 
     } catch (err) {
       toast.error("An unexpected error occurred. Please try again.");
@@ -75,7 +75,7 @@ export default function LoginPage() {
               <span className="text-slate-800 font-medium text-sm">+91</span>
               <span className="text-slate-300">|</span>
               <label htmlFor="phone" className="sr-only">
-                + Mobile number +{" "}
+                Mobile Number
               </label>
               <input
                 id="phone"

@@ -12,19 +12,21 @@ export default async function RootPage() {
 
   // TODO (TES-167): Build full landing page here
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <h1 className="text-7xl font-bold text-[#E8202A]">TESTIO</h1>
-      <p className="mt-2 text-lg text-[#666]">Taste of Native</p>
-      <Link
-        href="/login"
-        className="mt-8 rounded-xl bg-[#E8202A] px-10 py-4 font-semibold text-white"
-      >
-        Order Now
-      </Link>
+    <>
+      <LandingPageNavbar />
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+        <h1 className="text-7xl font-bold text-[#E8202A]">TESTIO</h1>
+        <p className="mt-2 text-lg text-[#666]">Taste of Native</p>
+        <Link
+          href="/login"
+          className="mt-8 rounded-xl bg-[#E8202A] px-10 py-4 font-semibold text-white"
+        >
+          Order Now
+        </Link>
 
-      <h1 className="text-5xl font-bold text-[#E8202A] my-7 mt-10 text-center md:text-left">
-        How It Works
-      </h1>
+        <h2 className="text-5xl font-bold text-[#E8202A] my-7 mt-10 text-center md:text-left">
+          How It Works
+        </h2>
 
       <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl mx-auto justify-center items-stretch my-8 px-4">
         {/* Step 1 */}
@@ -60,5 +62,6 @@ export default async function RootPage() {
 
      
     </main>
+  </>
   );
 }
