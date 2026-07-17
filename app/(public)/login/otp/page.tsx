@@ -22,21 +22,10 @@ function OtpPageContent() {
     }
   }, []);
 
-  const otpInputs = Array(6).fill("");
-  const [phone, setPhone] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPhone(sessionStorage.getItem("login_phone") || "");
-    }
-  }, []);
-
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
   const canResend = countdown <= 0;
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
   const [resending, setResending] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -62,17 +51,9 @@ function OtpPageContent() {
       return;
     }
 
-
-    if (!cleanValue) {
-      newOtp[index] = "";
-      setOtp(newOtp);
-      return;
-    }
-
     newOtp[index] = cleanValue.substring(cleanValue.length - 1);
     setOtp(newOtp);
 
-    if (index < 5) {
     if (index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -127,16 +108,6 @@ function OtpPageContent() {
       return;
     }
 
-    const code = otp.join("");
-    if (!phone || code.length !== 6) {
-      if (!phone) {
-        toast.error("Phone number is missing. Please restart the login process.");
-      } else {
-        toast.error("Please enter a complete 6-digit OTP code.");
-      }
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -173,21 +144,6 @@ function OtpPageContent() {
                 router.push("/dashboard"); // First-time user onboarding (profile exists but no name)
               }
             }
-            if (profileError) {
-              if (profileError.code === "PGRST116") {
-                toast.success("Successfully logged in!");
-                router.push("/dashboard"); // First-time user onboarding (missing profile row)
-              } else {
-                toast.error(profileError.message);
-              }
-            } else {
-              toast.success("Successfully logged in!");
-              if (userProfile && userProfile.name) {
-                router.push("/home"); // Returning user with a setup profile
-              } else {
-                router.push("/dashboard"); // First-time user onboarding (profile exists but no name)
-              }
-            }
          }
        }
     } catch (err) {
@@ -199,21 +155,6 @@ function OtpPageContent() {
     
   }
 
-  const handleResend = async (e:React.FormEvent) => {
-    if (resending) return;
-    setResending(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ phone });
-      if (!error) {
-        toast.success("New OTP code sent!");
-        setCountdown(60);
-        setOtp(Array(6).fill(""));
-        inputRefs.current[0]?.focus(); // Refocus first field
-      } else {
-        toast.error(error.message);
-      }
-    } finally {
-      setResending(false);
   const handleResend = async () => {
     if (resending) return;
     setResending(true);
@@ -273,39 +214,7 @@ function OtpPageContent() {
               />
             ))}
           </div>
-        {/* Form wrapping OTP inputs and verification Button */}
-        <form onSubmit={handleClickVerify} className="flex flex-col gap-6">
-          {/* 6-Digit OTP Inputs */}
-          <div className="flex justify-between gap-2 my-2" onPaste={handlePaste}>
-            {otp.map((digit, idx) => (
-              <input
-                key={idx}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                ref={(el) => {
-                  inputRefs.current[idx] = el;
-                }}
-                value={digit}
-                onChange={(e) => handleChange(e.target.value, idx)}
-                onKeyDown={(e) => handleKeyDown(e, idx)}
-                autoFocus={idx === 0}
-                aria-label={`Digit ${idx + 1}`}
-                name={`otp-digit-${idx + 1}`}
-                className="w-12 h-12 text-center text-lg font-semibold text-slate-800 border border-slate-200 rounded-xl outline-none focus:border-[#E8202A] focus:ring-2 focus:ring-[#E8202A]/10 bg-white transition-all"
-              />
-            ))}
-          </div>
 
-          {/* Verify Button */}
-          <Button
-            type="submit"
-            disabled={loading || otp.some((d) => d === "")}
-            className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white font-semibold py-2.5 rounded-xl transition-colors h-11"
-          >
-            {loading ? "Verifying..." : "Verify OTP"}
-          </Button>
-        </form>
           {/* Verify Button */}
           <Button
             type="submit"
@@ -323,10 +232,7 @@ function OtpPageContent() {
               onClick={handleResend}
               disabled={resending}
               className="text-[#E8202A] hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={resending}
-              className="text-[#E8202A] hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resending ? "Sending..." : "Resend OTP"}
               {resending ? "Sending..." : "Resend OTP"}
             </button>
           ) : (
