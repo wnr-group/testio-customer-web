@@ -3,7 +3,6 @@ import { Poppins } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { Providers } from '@/components/providers'
 import './globals.css'
-import { LandingPageNavbar } from '@/components/layout/LandingPageNavbar'
 
 const poppins = Poppins({
   variable: '--font-poppins',

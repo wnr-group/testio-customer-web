@@ -70,13 +70,13 @@ export default function LoginPage() {
           </div>
 
           {/* Input Form */}
-          <form
-            onSubmit={handleSendOtp}
-            className="w-full flex flex-col gap-4"
-          >
+          <form onSubmit={handleSendOtp} className="w-full flex flex-col gap-4">
             <div className="flex items-center gap-3 px-3.5 py-2.5 border border-slate-200 rounded-xl focus-within:border-[#E8202A] focus-within:ring-2 focus-within:ring-[#E8202A]/10 bg-white transition-all">
               <span className="text-slate-800 font-medium text-sm">+91</span>
               <span className="text-slate-300">|</span>
+              <label htmlFor="phone" className="sr-only">
+                + Mobile number +{" "}
+              </label>
               <input
                 id="phone"
                 type="tel"

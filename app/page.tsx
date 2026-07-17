@@ -58,12 +58,7 @@ export default async function RootPage() {
         </div>
       </div>
 
-      <Link
-        href="/"
-        className="mt-8 rounded-xl bg-[#1F2937] px-10 py-4 font-semibold text-white"
-      >
-        Become a Cook
-      </Link>
+     
     </main>
   );
 }
