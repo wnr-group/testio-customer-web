@@ -68,8 +68,8 @@ export function AmbassadorSection() {
               src={ambassador.images.medals}
               alt="Medals and trophies"
               width={448}
-              height={336}
-              className="aspect-[4/3] w-full object-cover"
+              height={560}
+              className="aspect-[4/5] w-full object-cover object-top"
             />
             <figcaption className="mt-2 text-center text-[11px] font-semibold text-[#1A1A1A]/70">
               {ambassador.medalsCaption}

@@ -112,14 +112,15 @@ export function Hero() {
                     <svg
                       data-comb
                       viewBox="0 0 220 30"
+                      preserveAspectRatio="none"
                       aria-hidden
                       fill="none"
-                      className="absolute -bottom-2 left-0 w-full"
+                      className="absolute -bottom-[0.22em] left-0 h-[0.28em] w-full"
                     >
                       <path
                         d="M4 24 C30 10 44 10 58 22 C70 8 84 8 96 20 C110 6 126 6 138 18 C160 8 190 10 216 22"
                         stroke="#E8202A"
-                        strokeWidth="6"
+                        strokeWidth="16"
                         strokeLinecap="round"
                       />
                     </svg>
