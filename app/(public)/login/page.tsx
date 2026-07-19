@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -60,21 +61,16 @@ function LoginContent() {
   };
   
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 z-50">
+      <AuthShell>
         <Card className="w-full max-w-[400px] min-w-[320px] shadow-lg border border-slate-100 bg-white rounded-2xl p-6 flex flex-col gap-6">
-          {/* Brand Logo and Welcome */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 bg-[#FEECEF] rounded-2xl flex items-center justify-center shrink-0">
-              <span className="text-[#E8202A] font-bold text-xl">T</span>
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Welcome to TESTIO
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Enter your mobile number to get started
-              </p>
-            </div>
+          {/* Welcome */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome to TESTIO
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Enter your mobile number to get started
+            </p>
           </div>
 
           {/* Input Form */}
@@ -107,7 +103,7 @@ function LoginContent() {
             </Button>
           </form>
         </Card>
-      </div>
+      </AuthShell>
     );
   }
 

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { safeInternalPath } from "@/lib/utils";
 
 function OtpPageContent() {
@@ -194,28 +195,23 @@ function OtpPageContent() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 z-50">
+    <AuthShell>
       <Card className="w-full max-w-[400px] min-w-[320px] shadow-lg border border-slate-100 bg-white rounded-2xl p-6 flex flex-col gap-6">
-        {/* Brand Logo and Title */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-[#FEECEF] rounded-2xl flex items-center justify-center shrink-0">
-            <span className="text-[#E8202A] font-bold text-xl">T</span>
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Verify Mobile Number
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              We sent a 6-digit OTP code to {phone}
-            </p>
-            <button
-              type="button"
-              onClick={handleChangeNumber}
-              className="text-[#E8202A] hover:underline font-medium text-sm mt-1"
-            >
-              Change number
-            </button>
-          </div>
+        {/* Title */}
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Verify Mobile Number
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            We sent a 6-digit OTP code to {phone}
+          </p>
+          <button
+            type="button"
+            onClick={handleChangeNumber}
+            className="text-[#E8202A] hover:underline font-medium text-sm mt-1"
+          >
+            Change number
+          </button>
         </div>
 
         {/* Form wrapping OTP inputs and verification Button */}
@@ -267,7 +263,7 @@ function OtpPageContent() {
           )}
         </div>
       </Card>
-    </div>
+    </AuthShell>
   );
 
 }
