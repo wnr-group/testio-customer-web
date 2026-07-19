@@ -20,6 +20,7 @@ function LoginContent() {
 
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const closeHref = safeInternalPath(searchParams.get("next")) || "/";
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +62,7 @@ function LoginContent() {
   };
   
     return (
-      <AuthShell>
+      <AuthShell closeHref={closeHref}>
         <Card className="w-full max-w-[400px] min-w-[320px] shadow-lg border border-slate-100 bg-white rounded-2xl p-6 flex flex-col gap-6">
           {/* Welcome */}
           <div className="text-center">

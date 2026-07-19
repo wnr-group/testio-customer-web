@@ -14,6 +14,7 @@ function OtpPageContent() {
   const supabase = createClient();
 
   const [phone, setPhone] = useState("");
+  const [closeHref, setCloseHref] = useState("/");
 
   useEffect(() => {
     const storedPhone = sessionStorage.getItem("login_phone");
@@ -23,6 +24,7 @@ function OtpPageContent() {
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhone(storedPhone);
+    setCloseHref(safeInternalPath(sessionStorage.getItem("login_next")) || "/");
   }, [router]);
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
@@ -195,7 +197,7 @@ function OtpPageContent() {
   }
 
   return (
-    <AuthShell>
+    <AuthShell closeHref={closeHref}>
       <Card className="w-full max-w-[400px] min-w-[320px] shadow-lg border border-slate-100 bg-white rounded-2xl p-6 flex flex-col gap-6">
         {/* Title */}
         <div className="text-center">
