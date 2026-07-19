@@ -22,7 +22,13 @@ export function AmbassadorSection() {
           ease: 'power2.out',
           scrollTrigger: { trigger: ref.current, start: 'top 70%', end: 'top 20%', scrub: 0.6 },
         })
-        gsap.from('[data-amb-copy] > *', {
+        // :not([data-amb-polaroid]) — the polaroid figure is also a direct
+        // child of [data-amb-copy], and it gets its own dedicated tween
+        // below. Without the exclusion, two separate GSAP tweens fight over
+        // the same element's opacity/y, triggered at different scroll
+        // points, each independently reversible — which is what made the
+        // medals photo disappear "most of the time".
+        gsap.from('[data-amb-copy] > :not([data-amb-polaroid])', {
           y: 32,
           opacity: 0,
           stagger: 0.12,
@@ -34,9 +40,14 @@ export function AmbassadorSection() {
           y: 60,
           rotation: 6,
           opacity: 0,
-          duration: 0.8,
-          ease: 'back.out(1.4)',
-          scrollTrigger: { trigger: ref.current, start: 'top 40%' },
+          ease: 'power2.out',
+          // Was also a one-shot `start: 'top 40%'` trigger with the default
+          // toggleActions ("play none none reverse") — scrolling back up
+          // even slightly after it played (trackpad momentum settling,
+          // re-reading a line) reversed it straight back to invisible.
+          // scrub ties opacity directly to scroll position instead, so
+          // there's no "did it fire" state to get out of sync.
+          scrollTrigger: { trigger: ref.current, start: 'top 70%', end: 'top 30%', scrub: 0.6 },
         })
       })
     },
