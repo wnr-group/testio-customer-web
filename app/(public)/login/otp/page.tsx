@@ -126,25 +126,23 @@ function OtpPageContent() {
        } else {
          const user = data.user;
          if (user) {
-           const { data: userProfile, error: profileError } = await supabase
-             .from("users")
-             .select("name")
-             .eq("id", user.id)
-             .single();
+           // verifyOtp() only creates the auth.users row — public.users has no
+           // client INSERT policy, so this RPC (SECURITY DEFINER, own-row-only,
+           // hardcoded role='customer') creates the profile on first login and
+           // just returns it on every login after. Without this, anything with
+           // a users FK (addresses, orders) fails with a 409/23503.
+           const { data: profile, error: profileError } = await supabase.rpc(
+             "ensure_customer_profile",
+             { p_phone: phone }
+           );
 
             if (profileError) {
-              if (profileError.code === "PGRST116") {
-                toast.success("Successfully logged in!");
-                sessionStorage.removeItem("login_next");
-                router.push("/dashboard"); // First-time user onboarding (missing profile row)
-              } else {
-                toast.error(profileError.message);
-              }
+              toast.error(profileError.message);
             } else {
               toast.success("Successfully logged in!");
               const next = safeInternalPath(sessionStorage.getItem("login_next"));
               sessionStorage.removeItem("login_next");
-              if (userProfile && userProfile.name) {
+              if (profile && profile.name) {
                 router.push(next || "/home"); // Returning user — back to where they were
               } else {
                 router.push("/dashboard"); // First-time user onboarding (next intentionally dropped)
