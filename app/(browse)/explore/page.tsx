@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,6 +18,7 @@ import { CookCard, type CookProfile } from '@/components/CookCard'
 import { DishCard, type Dish } from '@/components/DishCard'
 import { useBrowseLocation } from '@/hooks/useBrowseLocation'
 import { LocationSearchBox } from '@/components/marketing/LocationSearchBox'
+import { heroDishes } from '@/lib/marketing-content'
 
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 
@@ -150,6 +152,44 @@ export default function ExplorePage() {
           )}
         </div>
       </section>
+
+      {!location && (
+        <section className="px-4 py-16">
+          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+            <div className="mb-8 flex items-center justify-center -space-x-6">
+              {heroDishes.slice(0, 3).map((dish, i) => (
+                <Image
+                  key={dish.src}
+                  src={dish.src}
+                  alt={dish.alt}
+                  width={128}
+                  height={128}
+                  className={`aspect-square rounded-full object-cover shadow-lg ring-4 ring-[#FFF9F2] ${
+                    i === 1 ? 'z-10 size-32' : 'size-24 opacity-90'
+                  }`}
+                />
+              ))}
+            </div>
+            <h2 className="text-xl font-extrabold text-[#1A1A1A] md:text-2xl">
+              Real home-cooked food is closer than you think
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-[#666]">
+              Share your location or search your area above and we&apos;ll show you kitchens
+              cooking fresh, right now.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              {['Fresh daily', 'Verified cooks', 'Hyperlocal'].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#1A1A1A]/70 shadow-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {location && (
         <div className="mx-auto max-w-7xl px-4">

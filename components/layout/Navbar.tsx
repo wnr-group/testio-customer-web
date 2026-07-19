@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ShoppingCart, User, Menu } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/Logo'
 
 export function Navbar() {
   const itemCount = useCartStore((s) => s.itemCount())
@@ -19,8 +20,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-[--color-border-color] bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/home" className="text-xl font-bold text-[--color-brand-primary]">
-          TESTIO
+        <Link href="/home" aria-label="TESTIO home">
+          <Logo />
         </Link>
 
         {/* Desktop nav */}
