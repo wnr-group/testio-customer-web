@@ -13,8 +13,8 @@ import { hero, heroDishes } from '@/lib/marketing-content'
 const DISH_LAYOUT = [
   { className: 'left-[4%] top-[16%] w-28 md:w-44 rotate-[-6deg]', speed: 1.4 },
   { className: 'right-[6%] top-[20%] w-24 md:w-40 rotate-[5deg]', speed: 1.0 },
-  { className: 'left-[10%] bottom-[10%] w-24 md:w-36 rotate-[4deg]', speed: 0.7 },
-  { className: 'right-[12%] bottom-[14%] w-28 md:w-44 rotate-[-5deg]', speed: 1.2 },
+  { className: 'left-[5%] bottom-[4%] w-20 md:w-36 rotate-[4deg]', speed: 0.7 },
+  { className: 'right-[5%] bottom-[6%] w-24 md:w-44 rotate-[-5deg]', speed: 1.2 },
 ]
 
 export function Hero() {
