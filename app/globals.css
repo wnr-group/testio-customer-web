@@ -10,6 +10,11 @@
   --color-brand-success:  #2DB34A;
   --color-brand-error:    #D32F2F;
 
+  /* Marketing site surfaces */
+  --color-cream:      #FFF9F2;
+  --color-cream-deep: #FBEFE2;
+  --color-ink-deep:   #191210;
+
   /* Semantic surface colours */
   --color-bg-base:        #F7F7F7;
   --color-surface:        #FFFFFF;
