@@ -1,5 +1,3 @@
-// TODO (TES-167): 6-digit OTP input, countdown timer, resend link
-// Uses: supabase.auth.verifyOtp({ phone, token, type: 'sms' })
 'use client'
 import { useState ,useRef, useEffect, Suspense} from "react";
 import { useRouter } from "next/navigation";
@@ -7,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { safeInternalPath } from "@/lib/utils";
 
 function OtpPageContent() {
 
@@ -16,11 +15,14 @@ function OtpPageContent() {
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPhone(sessionStorage.getItem("login_phone") || "");
+    const storedPhone = sessionStorage.getItem("login_phone");
+    if (!storedPhone) {
+      router.push("/login");
+      return;
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhone(storedPhone);
+  }, [router]);
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
@@ -95,10 +97,7 @@ function OtpPageContent() {
   };
 
 
-  const handleClickVerify = async (e:React.FormEvent) => {
-    e.preventDefault();
-
-    const code = otp.join("");
+  const submitOtp = async (code: string) => {
     if (!phone || code.length !== 6) {
       if (!phone) {
         toast.error("Phone number is missing. Please restart the login process.");
@@ -132,16 +131,19 @@ function OtpPageContent() {
             if (profileError) {
               if (profileError.code === "PGRST116") {
                 toast.success("Successfully logged in!");
+                sessionStorage.removeItem("login_next");
                 router.push("/dashboard"); // First-time user onboarding (missing profile row)
               } else {
                 toast.error(profileError.message);
               }
             } else {
               toast.success("Successfully logged in!");
+              const next = safeInternalPath(sessionStorage.getItem("login_next"));
+              sessionStorage.removeItem("login_next");
               if (userProfile && userProfile.name) {
-                router.push("/home"); // Returning user with a setup profile
+                router.push(next || "/home"); // Returning user — back to where they were
               } else {
-                router.push("/dashboard"); // First-time user onboarding (profile exists but no name)
+                router.push("/dashboard"); // First-time user onboarding (next intentionally dropped)
               }
             }
          }
@@ -152,7 +154,25 @@ function OtpPageContent() {
     finally {
       setLoading(false);
     }
-    
+  }
+
+  const handleClickVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitOtp(otp.join(""));
+  }
+
+  useEffect(() => {
+    const code = otp.join("");
+    if (code.length === 6 && !loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      submitOtp(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp]);
+
+  const handleChangeNumber = () => {
+    sessionStorage.removeItem("login_phone");
+    router.push("/login");
   }
 
   const handleResend = async () => {
@@ -188,6 +208,13 @@ function OtpPageContent() {
             <p className="text-sm text-slate-500 mt-1">
               We sent a 6-digit OTP code to {phone}
             </p>
+            <button
+              type="button"
+              onClick={handleChangeNumber}
+              className="text-[#E8202A] hover:underline font-medium text-sm mt-1"
+            >
+              Change number
+            </button>
           </div>
         </div>
 
