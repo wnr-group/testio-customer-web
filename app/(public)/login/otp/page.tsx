@@ -1,7 +1,6 @@
 // TODO (TES-167): 6-digit OTP input, countdown timer, resend link
 // Uses: supabase.auth.verifyOtp({ phone, token, type: 'sms' })
 'use client'
-import { useSearchParams } from "next/navigation"
 import { useState ,useRef, useEffect, Suspense} from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,14 +13,20 @@ function OtpPageContent() {
   const router = useRouter();
   const supabase = createClient();
 
-  const searchParams = useSearchParams();
-  const phone = searchParams.get("phone") || "";
+  const [phone, setPhone] = useState("");
 
-  const otpInputs = Array(6).fill("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPhone(sessionStorage.getItem("login_phone") || "");
+    }
+  }, []);
+
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
   const canResend = countdown <= 0;
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -38,14 +43,18 @@ function OtpPageContent() {
   // focus next block
   const handleChange = (value: string, index: number) => {
     const cleanValue = value.replace(/\D/g, "");
-    if (!cleanValue) return;
-
     const newOtp = [...otp];
+
+    if (!cleanValue) {
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
+    }
+
     newOtp[index] = cleanValue.substring(cleanValue.length - 1);
     setOtp(newOtp);
 
-    if (index < 5 && cleanValue)
-    {
+    if (index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -89,9 +98,17 @@ function OtpPageContent() {
   const handleClickVerify = async (e:React.FormEvent) => {
     e.preventDefault();
 
-    setLoading(true);
-
     const code = otp.join("");
+    if (!phone || code.length !== 6) {
+      if (!phone) {
+        toast.error("Phone number is missing. Please restart the login process.");
+      } else {
+        toast.error("Please enter a complete 6-digit OTP code.");
+      }
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -112,14 +129,21 @@ function OtpPageContent() {
              .eq("id", user.id)
              .single();
 
-           toast.success("Successfully logged in!");
-
-           // Redirect logic
-           if (userProfile && userProfile.name) {
-             router.push("/home"); // Returning user with a setup profile
-           } else {
-             router.push("/dashboard"); // First-time user onboarding
-           }
+            if (profileError) {
+              if (profileError.code === "PGRST116") {
+                toast.success("Successfully logged in!");
+                router.push("/dashboard"); // First-time user onboarding (missing profile row)
+              } else {
+                toast.error(profileError.message);
+              }
+            } else {
+              toast.success("Successfully logged in!");
+              if (userProfile && userProfile.name) {
+                router.push("/home"); // Returning user with a setup profile
+              } else {
+                router.push("/dashboard"); // First-time user onboarding (profile exists but no name)
+              }
+            }
          }
        }
     } catch (err) {
@@ -129,23 +153,25 @@ function OtpPageContent() {
       setLoading(false);
     }
     
-
-   
   }
 
-  const handleResend = async (e:React.FormEvent) => {
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-    if (!error) {
-      toast.success("New OTP code sent!");
-      setCountdown(60);
-      setOtp(Array(6).fill(""));
-      inputRefs.current[0]?.focus(); // Refocus first field
-    } else {
-      toast.error(error.message);
+  const handleResend = async () => {
+    if (resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone });
+      if (!error) {
+        toast.success("New OTP code sent!");
+        setCountdown(60);
+        setOtp(Array(6).fill(""));
+        inputRefs.current[0]?.focus(); // Refocus first field
+      } else {
+        toast.error(error.message);
+      }
+    } finally {
+      setResending(false);
     }
   }
-
-
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 z-50">
@@ -165,43 +191,49 @@ function OtpPageContent() {
           </div>
         </div>
 
-        {/* 6-Digit OTP Inputs */}
-        <div className="flex justify-between gap-2 my-2" onPaste={handlePaste}>
-          {otp.map((digit, idx) => (
-            <input
-              key={idx}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              ref={(el) => {
-                inputRefs.current[idx] = el;
-              }}
-              value={digit}
-              onChange={(e) => handleChange(e.target.value, idx)}
-              onKeyDown={(e) => handleKeyDown(e, idx)}
-              autoFocus={idx === 0}
-              className="w-12 h-12 text-center text-lg font-semibold text-slate-800 border border-slate-200 rounded-xl outline-none focus:border-[#E8202A] focus:ring-2 focus:ring-[#E8202A]/10 bg-white transition-all"
-            />
-          ))}
-        </div>
+        {/* Form wrapping OTP inputs and verification Button */}
+        <form onSubmit={handleClickVerify} className="flex flex-col gap-6">
+          {/* 6-Digit OTP Inputs */}
+          <div className="flex justify-between gap-2 my-2" onPaste={handlePaste}>
+            {otp.map((digit, idx) => (
+              <input
+                key={idx}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                ref={(el) => {
+                  inputRefs.current[idx] = el;
+                }}
+                value={digit}
+                onChange={(e) => handleChange(e.target.value, idx)}
+                onKeyDown={(e) => handleKeyDown(e, idx)}
+                autoFocus={idx === 0}
+                aria-label={`Digit ${idx + 1}`}
+                name={`otp-digit-${idx + 1}`}
+                className="w-12 h-12 text-center text-lg font-semibold text-slate-800 border border-slate-200 rounded-xl outline-none focus:border-[#E8202A] focus:ring-2 focus:ring-[#E8202A]/10 bg-white transition-all"
+              />
+            ))}
+          </div>
 
-        {/* Verify Button */}
-        <Button
-          onClick={handleClickVerify}
-          disabled={loading || otp.some((d) => d === "")}
-          className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white font-semibold py-2.5 rounded-xl transition-colors h-11"
-        >
-          {loading ? "Verifying..." : "Verify OTP"}
-        </Button>
+          {/* Verify Button */}
+          <Button
+            type="submit"
+            disabled={loading || otp.some((d) => d === "")}
+            className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white font-semibold py-2.5 rounded-xl transition-colors h-11"
+          >
+            {loading ? "Verifying..." : "Verify OTP"}
+          </Button>
+        </form>
 
         {/* Resend OTP and Timer */}
         <div className="text-center text-sm">
           {canResend ? (
             <button
               onClick={handleResend}
-              className="text-[#E8202A] hover:underline font-medium"
+              disabled={resending}
+              className="text-[#E8202A] hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Resend OTP
+              {resending ? "Sending..." : "Resend OTP"}
             </button>
           ) : (
             <span className="text-slate-400">Resend OTP in {countdown}s</span>
