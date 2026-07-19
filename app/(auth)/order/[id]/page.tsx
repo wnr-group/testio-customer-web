@@ -135,16 +135,26 @@ export default function OrderDetailPage() {
 
     setCancelling(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "cancelled", cancellation_reason: reason.trim() })
-        .eq("id", order.id);
-      if (error) throw error;
+      // orders has no customer UPDATE RLS policy (only cook_update /
+      // customer_select / customer_insert) — a direct client-side update
+      // here matches 0 rows and PostgREST reports that as success, so this
+      // must go through cancel-order (service_role), which also restores
+      // dish quantities, issues the refund, and notifies the cook.
+      const { data, error } = await supabase.functions.invoke("cancel-order", {
+        body: { order_id: order.id, reason: reason.trim() },
+      });
+      if (error) {
+        const body = await error.context?.json?.().catch(() => null);
+        throw new Error(body?.error || error.message);
+      }
+      if (data?.error) throw new Error(data.error);
+
       setOrder({ ...order, status: "cancelled", cancellation_reason: reason.trim() });
       toast.success("Order cancelled");
     } catch (err) {
       console.error("Cancel order error:", err);
-      toast.error("Failed to cancel order. Please try again.");
+      const message = err instanceof Error ? err.message : "Failed to cancel order. Please try again.";
+      toast.error(message);
     } finally {
       setCancelling(false);
     }
