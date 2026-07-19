@@ -155,15 +155,10 @@ export default function CheckoutPage() {
         }
       }
 
-      // 1. Create order record
-      const randomArr = new Uint32Array(1);
-      crypto.getRandomValues(randomArr);
-      const orderNumber = String((randomArr[0] % 9000) + 1000);
-
+      // 1. Create order record (order_number is generated server-side by a trigger)
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          order_number: orderNumber,
           customer_id: user.id,
           cook_id: cookId,
           status: "pending",

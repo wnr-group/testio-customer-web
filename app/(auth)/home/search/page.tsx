@@ -1,8 +1,5 @@
 "use client";
 
-// TODO (TES-168): Search & Filters, Cooks/Dishes List view
-// Stitch ref: "Search & Discovery - TESTIO"
-
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";

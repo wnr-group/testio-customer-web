@@ -1,10 +1,107 @@
-// TODO (TES-172): Mapbox draggable pin, reverse geocode, label selector, save
-// Map: dynamic(() => import('@/components/map/MapView'), { ssr: false })
-// Reverse geocode on pin drop → fill address_line field
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import type { PickedLocation } from "@/components/location/LocationPicker";
+
+const LocationPicker = dynamic(() => import("@/components/location/LocationPicker"), {
+  ssr: false,
+});
+
+const FALLBACK_CENTER = { lat: 20.5937, lng: 78.9629 };
+
 export default function NewAddressPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [initialCenter, setInitialCenter] = useState(FALLBACK_CENTER);
+
+  useEffect(() => {
+    async function load() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("customer_addresses")
+        .select("lat, lng")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setInitialCenter({ lat: data.lat, lng: data.lng });
+      }
+      setLoading(false);
+    }
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleConfirm = async (picked: PickedLocation) => {
+    setSaving(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { count } = await supabase
+        .from("customer_addresses")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      const { error } = await supabase.from("customer_addresses").insert({
+        user_id: user.id,
+        label: picked.label,
+        address_line: picked.address,
+        lat: picked.lat,
+        lng: picked.lng,
+        is_default: (count ?? 0) === 0,
+      });
+      if (error) throw error;
+
+      toast.success("Address saved");
+      router.push("/addresses");
+    } catch (err) {
+      console.error("Failed to save address", err);
+      toast.error("Couldn't save this address. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F8] flex items-center justify-center">
+        <Loader2 className="size-8 text-[#D61A22] animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <p className="text-[#666]">Add Address (TES-172)</p>
+    <div className="min-h-screen bg-[#FAF8F8]">
+      <LocationPicker
+        open
+        initialCenter={initialCenter}
+        onClose={() => router.push("/addresses")}
+        onConfirm={handleConfirm}
+        saving={saving}
+      />
     </div>
-  )
+  );
 }

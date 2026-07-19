@@ -8,8 +8,12 @@ export type OrderStatus =
   | 'accepted'
   | 'preparing'
   | 'ready'
+  | 'delivery_assigned'
+  | 'picked_up'
+  | 'delivered'
   | 'completed'
   | 'cancelled'
+  | 'rejected'
 
 export function useRealtimeOrder(orderId: string) {
   const [status, setStatus] = useState<OrderStatus | null>(null)
