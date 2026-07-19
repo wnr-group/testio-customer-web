@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, User, Menu } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
@@ -7,6 +8,12 @@ import { Button } from '@/components/ui/button'
 
 export function Navbar() {
   const itemCount = useCartStore((s) => s.itemCount())
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[--color-border-color] bg-white/95 backdrop-blur-sm">
@@ -33,7 +40,7 @@ export function Navbar() {
             <Button variant="ghost" size="icon">
               <ShoppingCart className="size-5" />
             </Button>
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[--color-brand-primary] text-[10px] font-semibold text-white">
                 {itemCount > 9 ? '9+' : itemCount}
               </span>

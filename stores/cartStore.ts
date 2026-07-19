@@ -63,6 +63,23 @@ export const useCartStore = create<CartState>()(
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.qty, 0),
     }),
-    { name: 'testio-cart' }
+    {
+      name: 'testio-cart',
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 1 && persistedState && typeof persistedState === 'object') {
+          const state = persistedState as any;
+          if (Array.isArray(state.items)) {
+            state.items = state.items.map((item: any) => ({
+              ...item,
+              qty: typeof item.qty === 'number' ? item.qty : 1,
+              price: typeof item.price === 'number' ? item.price : 0,
+            }));
+          }
+          return state;
+        }
+        return persistedState;
+      }
+    }
   )
 )
