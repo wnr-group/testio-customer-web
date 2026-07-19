@@ -16,12 +16,18 @@ export function PendingDishAutoAdd() {
     void (async () => {
       const raw = sessionStorage.getItem('pending_dish')
       if (!raw) return
+      // Claim the key synchronously BEFORE any await — otherwise React
+      // Strict Mode's double-invoked effect adds the dish twice.
+      sessionStorage.removeItem('pending_dish')
       const supabase = createClient()
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      if (!session) return
-      sessionStorage.removeItem('pending_dish')
+      if (!session) {
+        // Not signed in after all — put it back for the post-login visit.
+        sessionStorage.setItem('pending_dish', raw)
+        return
+      }
       try {
         const { cookId, cookName, item } = JSON.parse(raw) as {
           cookId: string
