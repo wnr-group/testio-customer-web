@@ -41,11 +41,13 @@ export function AuthShell({
         </div>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center p-4 sm:p-8">
+      <div className="relative isolate flex flex-1 items-center justify-center overflow-hidden p-4 sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-24 -z-10 h-80 w-80 rounded-full bg-[#F5A623]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-16 -z-10 h-96 w-96 rounded-full bg-[#E8202A]/15 blur-3xl" />
         <Link
           href={closeHref}
           aria-label="Close and go back to TESTIO"
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-md ring-1 ring-slate-100 transition-colors hover:bg-slate-50 hover:text-slate-800 sm:right-6 sm:top-6"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-md ring-1 ring-slate-100 transition-colors hover:bg-slate-50 hover:text-slate-800 sm:right-6 sm:top-6"
         >
           <X className="h-5 w-5" />
         </Link>

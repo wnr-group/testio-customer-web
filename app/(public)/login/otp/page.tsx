@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { safeInternalPath } from "@/lib/utils";
+import { cn, safeInternalPath } from "@/lib/utils";
+import { ShieldCheck } from "lucide-react";
 
 function OtpPageContent() {
 
@@ -198,22 +199,29 @@ function OtpPageContent() {
 
   return (
     <AuthShell closeHref={closeHref}>
-      <Card className="w-full max-w-[400px] min-w-[320px] shadow-lg border border-slate-100 bg-white rounded-2xl p-6 flex flex-col gap-6">
+      <Card className="relative w-full max-w-[400px] min-w-[320px] shadow-xl border border-slate-100 bg-white rounded-2xl overflow-hidden p-6 sm:p-7 flex flex-col gap-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#F5A623] via-[#E8202A] to-[#F5A623]" />
+
         {/* Title */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Verify Mobile Number
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            We sent a 6-digit OTP code to {phone}
-          </p>
-          <button
-            type="button"
-            onClick={handleChangeNumber}
-            className="text-[#E8202A] hover:underline font-medium text-sm mt-1"
-          >
-            Change number
-          </button>
+        <div className="text-center flex flex-col items-center gap-3 pt-1">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FEECEF] to-[#FDF3E4] flex items-center justify-center shrink-0">
+            <ShieldCheck className="h-7 w-7 text-[#E8202A]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Verify Mobile Number
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              We sent a 6-digit OTP code to {phone}
+            </p>
+            <button
+              type="button"
+              onClick={handleChangeNumber}
+              className="text-[#E8202A] hover:underline font-medium text-sm mt-1"
+            >
+              Change number
+            </button>
+          </div>
         </div>
 
         {/* Form wrapping OTP inputs and verification Button */}
@@ -235,7 +243,13 @@ function OtpPageContent() {
                 autoFocus={idx === 0}
                 aria-label={`Digit ${idx + 1}`}
                 name={`otp-digit-${idx + 1}`}
-                className="w-12 h-12 text-center text-lg font-semibold text-slate-800 border border-slate-200 rounded-xl outline-none focus:border-[#E8202A] focus:ring-2 focus:ring-[#E8202A]/10 bg-white transition-all"
+                className={cn(
+                  "w-12 h-12 text-center text-lg font-semibold rounded-xl outline-none border transition-all",
+                  "focus:border-[#E8202A] focus:ring-2 focus:ring-[#E8202A]/10",
+                  digit
+                    ? "border-[#E8202A]/30 bg-[#FEECEF] text-[#E8202A]"
+                    : "border-slate-200 bg-white text-slate-800"
+                )}
               />
             ))}
           </div>
@@ -244,14 +258,14 @@ function OtpPageContent() {
           <Button
             type="submit"
             disabled={loading || otp.some((d) => d === "")}
-            className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white font-semibold py-2.5 rounded-xl transition-colors h-11"
+            className="w-full bg-gradient-to-r from-[#E8202A] to-[#c71821] hover:from-[#c71821] hover:to-[#a91419] text-white font-semibold py-2.5 rounded-xl transition-all h-11 shadow-md shadow-[#E8202A]/20"
           >
             {loading ? "Verifying..." : "Verify OTP"}
           </Button>
         </form>
 
         {/* Resend OTP and Timer */}
-        <div className="text-center text-sm">
+        <div className="text-center text-sm border-t border-slate-100 pt-4">
           {canResend ? (
             <button
               onClick={handleResend}

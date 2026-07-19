@@ -6,16 +6,17 @@ type LogoProps = {
   variant?: 'light' | 'dark'
   withWordmark?: boolean
   className?: string
+  iconClassName?: string
 }
 
-export function Logo({ variant = 'light', withWordmark = true, className }: LogoProps) {
+export function Logo({ variant = 'light', withWordmark = true, className, iconClassName }: LogoProps) {
   return (
     <span
       role="img"
       aria-label="TESTIO"
       className={cn('inline-flex select-none items-center gap-2', className)}
     >
-      <svg viewBox="0 0 64 64" aria-hidden className="h-9 w-9 shrink-0">
+      <svg viewBox="0 0 64 64" aria-hidden className={cn('h-9 w-9 shrink-0', iconClassName)}>
         <rect x="2" y="6" width="60" height="56" rx="16" fill="#F5A623" />
         {/* rooster comb */}
         <path
