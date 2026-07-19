@@ -42,9 +42,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect logged-in users away from login page
+  // Redirect logged-in users away from login page — honoring a safe ?next=
   if ((path === '/login' || path === '/login/otp') && user) {
-    return NextResponse.redirect(new URL('/home', request.url))
+    const next = request.nextUrl.searchParams.get('next')
+    const dest =
+      next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\')
+        ? next
+        : '/home'
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return response

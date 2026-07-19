@@ -3,16 +3,18 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { safeInternalPath } from "@/lib/utils";
 
 
 
-export default function LoginPage() {
+function LoginContent() {
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [phone, setPhone] = useState("");
@@ -41,6 +43,12 @@ export default function LoginPage() {
 
       toast.success("OTP sent successfully!")
       sessionStorage.setItem("login_phone", formattedPhone);
+      const next = safeInternalPath(searchParams.get("next"));
+      if (next) {
+        sessionStorage.setItem("login_next", next);
+      } else {
+        sessionStorage.removeItem("login_next");
+      }
       router.push("/login/otp");
 
     } catch (err) {
@@ -103,4 +111,17 @@ export default function LoginPage() {
     );
   }
 
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 z-50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E8202A]"></div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+}
 

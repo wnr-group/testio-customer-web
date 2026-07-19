@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/cartStore";
+import { createClient } from "@/lib/supabase/client";
+import { LoginPromptSheet } from "@/components/marketing/LoginPromptSheet";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus } from "lucide-react";
@@ -33,6 +35,7 @@ export function DishCard({ dish }: DishCardProps) {
   const currentCookId = useCartStore((s) => s.cookId);
   const currentCookName = useCartStore((s) => s.cookName);
   const [mounted, setMounted] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -47,8 +50,38 @@ export function DishCard({ dish }: DishCardProps) {
       dish.dietary_status.toLowerCase().includes("veg")
     : false;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const kitchenName = dish.cook_profiles?.kitchen_name || "Home Cook";
+
+    // Logged-out visitors: remember the dish, then prompt to sign in.
+    // getSession reads local storage — no network round-trip per click.
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      try {
+        sessionStorage.setItem(
+          "pending_dish",
+          JSON.stringify({
+            cookId: dish.cook_id,
+            cookName: kitchenName,
+            item: {
+              dishId: dish.id,
+              name: dish.name,
+              price: dish.price,
+              qty: 1,
+              imageUrl: dish.image_url || undefined,
+              max_quantity: dish.max_quantity,
+            },
+          })
+        );
+      } catch {
+        // private mode — the login gate still works, just no auto-add
+      }
+      setShowLoginPrompt(true);
+      return;
+    }
 
     // Ask user for confirmation if they are ordering from a different kitchen
     if (currentCookId && currentCookId !== dish.cook_id) {
@@ -141,7 +174,7 @@ export function DishCard({ dish }: DishCardProps) {
         <div className="flex items-center justify-between gap-2 mt-2">
           {/* Brand Red Price Text */}
           <span className="font-extrabold text-[#E8202A] text-lg">
-            ${Number(dish.price).toFixed(2)}
+            ₹{Number(dish.price).toFixed(2)}
           </span>
 
           {mounted && qty > 0 ? (
@@ -180,6 +213,12 @@ export function DishCard({ dish }: DishCardProps) {
           )}
         </div>
       </div>
+
+      <LoginPromptSheet
+        dish={dish}
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </Card>
   );
 }
