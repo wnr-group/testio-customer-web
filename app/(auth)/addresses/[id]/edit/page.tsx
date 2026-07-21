@@ -7,10 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { PickedLocation } from "@/components/location/LocationPicker";
+import type { Database } from "@/types/database.types";
 
 const LocationPicker = dynamic(() => import("@/components/location/LocationPicker"), {
   ssr: false,
 });
+
+type Address = Database["public"]["Tables"]["customer_addresses"]["Row"];
 
 export default function EditAddressPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +22,7 @@ export default function EditAddressPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [initialCenter, setInitialCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [existing, setExisting] = useState<Address | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export default function EditAddressPage() {
         console.error("Failed to load address", error);
         setNotFound(true);
       } else {
-        setInitialCenter({ lat: data.lat, lng: data.lng });
+        setExisting(data);
       }
       setLoading(false);
     }
@@ -54,6 +57,22 @@ export default function EditAddressPage() {
   const handleConfirm = async (picked: PickedLocation) => {
     setSaving(true);
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      if (picked.isDefault) {
+        const { error: clearError } = await supabase
+          .from("customer_addresses")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+        if (clearError) throw clearError;
+      }
+
       const { error } = await supabase
         .from("customer_addresses")
         .update({
@@ -61,6 +80,7 @@ export default function EditAddressPage() {
           address_line: picked.address,
           lat: picked.lat,
           lng: picked.lng,
+          is_default: picked.isDefault,
         })
         .eq("id", id);
       if (error) throw error;
@@ -83,7 +103,7 @@ export default function EditAddressPage() {
     );
   }
 
-  if (notFound || !initialCenter) {
+  if (notFound || !existing) {
     return (
       <div className="min-h-screen bg-[#FAF8F8] flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-sm flex flex-col items-center gap-4 bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
@@ -106,7 +126,10 @@ export default function EditAddressPage() {
     <div className="min-h-screen bg-[#FAF8F8]">
       <LocationPicker
         open
-        initialCenter={initialCenter}
+        initialCenter={{ lat: existing.lat, lng: existing.lng }}
+        initialLabel={existing.label}
+        initialAddress={existing.address_line}
+        initialIsDefault={existing.is_default ?? false}
         onClose={() => router.push("/addresses")}
         onConfirm={handleConfirm}
         saving={saving}
