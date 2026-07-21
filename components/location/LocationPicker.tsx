@@ -27,86 +27,102 @@ type Props = {
 
 const LABELS = ['Home', 'Work', 'Other']
 
-export default function LocationPicker({ open, initialCenter, onClose, onConfirm, saving }: Props) {
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
-  const markerRef = useRef<mapboxgl.Marker | null>(null)
+export default function LocationPicker({
+  open,
+  initialCenter,
+  onClose,
+  onConfirm,
+  saving,
+}: Props) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
 
-  const [coords, setCoords] = useState(initialCenter)
-  const [address, setAddress] = useState('')
-  const [label, setLabel] = useState('Home')
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<PlaceResult[]>([])
-  const [geocoding, setGeocoding] = useState(false)
+  const [coords, setCoords] = useState(initialCenter);
+  const [address, setAddress] = useState("");
+  const [label, setLabel] = useState("Home");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PlaceResult[]>([]);
+  const [geocoding, setGeocoding] = useState(false);
 
   // Initialise the map + draggable pin when the picker opens.
   useEffect(() => {
-    if (!open || !mapContainerRef.current) return
+    if (!open || !mapContainerRef.current) return;
 
     const map = new mapboxgl.Map({
       accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN!,
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [initialCenter.lng, initialCenter.lat],
       zoom: 14,
-    })
-    mapRef.current = map
+    });
+    mapRef.current = map;
 
-    const marker = new mapboxgl.Marker({ color: '#E8202A', draggable: true })
+    const marker = new mapboxgl.Marker({ color: "#E8202A", draggable: true })
       .setLngLat([initialCenter.lng, initialCenter.lat])
-      .addTo(map)
-    markerRef.current = marker
+      .addTo(map);
+    markerRef.current = marker;
 
     const updateFromLngLat = async (lng: number, lat: number) => {
-      setCoords({ lat, lng })
-      setGeocoding(true)
-      const a = await reverseGeocode(lat, lng)
-      setAddress(a || `${lat.toFixed(5)}, ${lng.toFixed(5)}`)
-      setGeocoding(false)
-    }
+      setCoords({ lat, lng });
+      setGeocoding(true);
+      const a = await reverseGeocode(lat, lng);
+      setAddress(a || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      setGeocoding(false);
+    };
 
-    marker.on('dragend', () => {
-      const { lng, lat } = marker.getLngLat()
-      void updateFromLngLat(lng, lat)
-    })
-    map.on('click', (e) => {
-      marker.setLngLat(e.lngLat)
-      void updateFromLngLat(e.lngLat.lng, e.lngLat.lat)
-    })
-    map.on('load', () => map.resize())
+    marker.on("dragend", () => {
+      const { lng, lat } = marker.getLngLat();
+      void updateFromLngLat(lng, lat);
+    });
+    map.on("click", (e) => {
+      marker.setLngLat(e.lngLat);
+      void updateFromLngLat(e.lngLat.lng, e.lngLat.lat);
+    });
+    map.on("load", () => map.resize());
 
-    void updateFromLngLat(initialCenter.lng, initialCenter.lat)
+    void updateFromLngLat(initialCenter.lng, initialCenter.lat);
 
     return () => {
-      map.remove()
-      mapRef.current = null
-      markerRef.current = null
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced place search.
   useEffect(() => {
+    let active = true;
+
     if (!query.trim()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }
+
     const t = setTimeout(async () => {
-      setResults(await searchPlaces(query));
+      const places = await searchPlaces(query);
+      if (active) {
+        setResults(places);
+      }
     }, 300);
-    return () => clearTimeout(t);
-  }, [query])
+
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [query]);
 
   const pickResult = (r: PlaceResult) => {
-    setQuery(r.name)
-    setResults([])
-    setAddress(r.name)
-    setCoords({ lat: r.lat, lng: r.lng })
-    markerRef.current?.setLngLat([r.lng, r.lat])
-    mapRef.current?.flyTo({ center: [r.lng, r.lat], zoom: 15 })
-  }
+    setQuery(r.name);
+    setResults([]);
+    setAddress(r.name);
+    setCoords({ lat: r.lat, lng: r.lng });
+    markerRef.current?.setLngLat([r.lng, r.lat]);
+    mapRef.current?.flyTo({ center: [r.lng, r.lat], zoom: 15 });
+  };
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
@@ -114,8 +130,12 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div>
-            <h3 className="font-bold text-slate-900">Choose your delivery location</h3>
-            <p className="text-xs text-slate-400">Search an area or drag the pin to your spot</p>
+            <h3 className="font-bold text-slate-900">
+              Choose your delivery location
+            </h3>
+            <p className="text-xs text-slate-400">
+              Search an area or drag the pin to your spot
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -169,7 +189,11 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
               {geocoding ? (
                 <span className="text-slate-400">Locating…</span>
               ) : (
-                address || <span className="text-slate-400">Move the pin to set your spot</span>
+                address || (
+                  <span className="text-slate-400">
+                    Move the pin to set your spot
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -185,8 +209,8 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
                 onClick={() => setLabel(l)}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                   label === l
-                    ? 'bg-[#E8202A] text-white border-[#E8202A]'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                    ? "bg-[#E8202A] text-white border-[#E8202A]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                 }`}
               >
                 {l}
@@ -198,14 +222,20 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
         {/* Confirm */}
         <div className="px-5 py-4 mt-2">
           <Button
-            onClick={() => onConfirm({ lat: coords.lat, lng: coords.lng, label, address })}
+            onClick={() =>
+              onConfirm({ lat: coords.lat, lng: coords.lng, label, address })
+            }
             disabled={!address || geocoding || saving}
             className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white rounded-xl h-11 font-bold"
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : 'Confirm location'}
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              "Confirm location"
+            )}
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -73,7 +73,13 @@ export const useCartStore = create<CartState>()(
         }),
 
       removeItem: (dishId) =>
-        set((s) => ({ items: s.items.filter((i) => i.dishId !== dishId) })),
+        set((s) => {
+          const newItems = s.items.filter((i) => i.dishId !== dishId);
+          if (newItems.length === 0) {
+            return { items: [], cookId: null, cookName: null };
+          }
+          return { items: newItems };
+        }),
 
       clear: () => set({ cookId: null, cookName: null, items: [] }),
 
@@ -111,6 +117,15 @@ export const useCartStore = create<CartState>()(
                 max_quantity: !isNaN(maxQtyNum) ? maxQtyNum : 10,
               };
             });
+
+            if (state.items.length === 0) {
+              state.cookId = null;
+              state.cookName = null;
+            }
+          } else {
+            state.items = [];
+            state.cookId = null;
+            state.cookName = null;
           }
           return state;
         }

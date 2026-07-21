@@ -45,10 +45,10 @@ function getRelativeTime(dateString: string | null): string {
   if (diffInHours < 24) return `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `${diffInDays}d ago`;
-  const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+ const diffInWeeks = Math.floor(diffInDays / 7);
+ if (diffInDays < 30) return `${diffInWeeks}w ago`;
+ const diffInMonths = Math.floor(diffInDays / 30);
+ if (diffInMonths < 12) return `${diffInMonths}mo ago`;
   return `${Math.floor(diffInDays / 365)}y ago`;
 }
 
@@ -81,12 +81,15 @@ export default function CookReviewsPage() {
   });
 
   // 2. Fetch paginated reviews list
+  // 2. Fetch paginated reviews list
   const {
     data: reviewsData,
     isLoading: isLoadingReviews,
+    isFetching: isFetchingReviews,
     isPlaceholderData,
   } = useQuery({
     queryKey: ["reviews", id, page],
+
     queryFn: async () => {
       const from = (page - 1) * 10;
       const to = from + 9;
@@ -223,7 +226,7 @@ export default function CookReviewsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setPage((old) => Math.max(old - 1, 1))}
-                      disabled={page === 1 || isLoadingReviews}
+                      disabled={page === 1 || isFetchingReviews}
                       className="rounded-xl font-bold text-xs flex items-center gap-1"
                     >
                       <ChevronLeft className="size-3.5" />
@@ -238,7 +241,7 @@ export default function CookReviewsPage() {
                       onClick={() =>
                         setPage((old) => Math.min(old + 1, totalPages))
                       }
-                      disabled={page === totalPages || isLoadingReviews}
+                      disabled={page === totalPages || isFetchingReviews}
                       className="rounded-xl font-bold text-xs flex items-center gap-1"
                     >
                       Next
