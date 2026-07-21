@@ -6,7 +6,7 @@
 
 **Key Requirements (from plan):**
 - Add phone state (initial `null`, loading state `true`)
-- Fetch the cook phone in the existing `load()` effect (no new query, reuse the same effect)
+- Fetch the cook phone in the existing `load()` effect, but do not `await` it inline — fire the RPC and handle its result independently so it never blocks `setLoading(false)` or the rest of the page's loading flow
 - Replace the disabled "Call Cook" button with three states:
   1. Loading: disabled, grey (while `cookPhoneLoading` is true)
   2. Success: active `tel:` link showing phone on two lines ("Call Cook" / number), red button (`#D61A22` / `#b21018`)

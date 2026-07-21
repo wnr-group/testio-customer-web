@@ -129,9 +129,9 @@ Changes:
 ## Ready for Next Steps
 
 ✓ Code complete
-✓ All checks pass (TypeScript, build)
-✓ No regressions or new console errors
-✓ No breaking changes to existing functionality
-✓ Integration test cases ready for manual QA
+✓ Automated checks pass (TypeScript, build)
+⧗ Manual QA: pending — none of the test cases in the Testing Checklist above have been executed yet
+⧗ Regressions and console-error status: unverified until manual QA runs
+⧗ Deployment readiness: contingent on recording successful QA results and observations
 
-The implementation is ready for browser testing and deployment.
+The implementation is ready for manual browser testing. Release sign-off should wait until the manual QA checklist (`docs/superpowers/tasks/task-3-qa-checklist.md`) has been run and its results recorded.

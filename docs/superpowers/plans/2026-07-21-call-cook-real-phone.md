@@ -284,7 +284,7 @@ Expected: server starts on `localhost:3000` with no build errors.
 - [ ] **Step 2: Test 1 — Pending order**
 
 Log in as a customer with a `pending` order whose cook has a `users.phone` set. Open `/order/[id]`.
-Expected: Call Cook button briefly shows the loading (disabled, grey) state, then shows the cook's real number on two lines ("Call Cook" / phone), no console errors.
+Expected: the page's own loading skeleton clears as soon as the order/items data resolves — it no longer waits on the phone RPC. The Call Cook button independently shows its loading (disabled, grey) state and then shows the cook's real number on two lines ("Call Cook" / phone), no console errors.
 
 - [ ] **Step 3: Test 2 — Ready order**
 
@@ -301,10 +301,15 @@ Expected: phone still displays correctly; "Rate your order" button (unrelated fe
 Using an order whose cook's `users.phone` is empty/whitespace only (or temporarily set one to `''` in a test row, then revert), open that order.
 Expected: button renders the "Phone unavailable" disabled state, no crash, no console error.
 
-- [ ] **Step 6: Test 5 — Missing cook / RPC returns no row**
+- [ ] **Step 6a: Test 5a — Unauthorized order (redirect, no disclosure)**
 
-Use an order id that the RPC won't resolve a cook for (e.g., call `get_order_cook_phone` with an order id that doesn't belong to the logged-in customer, via a stale/mismatched session if reproducible, or rely on Task 1 Step 3's negative-case SQL result as evidence since this path is the same code branch as Step 5).
-Expected: "Phone unavailable" state, no crash.
+Use an order id that doesn't belong to the logged-in customer. Open `/order/[id]`.
+Expected: the page redirects to `/orders` with a "Order not found" toast before the phone RPC ever runs — no order detail, items, or phone data is disclosed.
+
+- [ ] **Step 6b: Test 5b — Authorized order, RPC returns no phone**
+
+Use an order id that *does* belong to the logged-in customer, but where `get_order_cook_phone` resolves to `null` (e.g. rely on Task 1 Step 3's negative-case SQL result as evidence since this is the same code branch as Test 4, or construct a case where the RPC's own logic returns no row for an authorized order).
+Expected: the order page loads normally (order, items, status all render), and the Call Cook button settles into the "Phone unavailable" state with no crash.
 
 - [ ] **Step 7: Test 6 — Network/RPC failure**
 

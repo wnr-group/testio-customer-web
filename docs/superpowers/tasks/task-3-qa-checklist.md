@@ -26,8 +26,8 @@
 ### Test 1: Pending Order with Valid Phone
 **Scenario:** Load an order in `pending` status where the cook has a `users.phone` set.
 
-- [ ] Page loads without errors
-- [ ] "Call Cook" button starts disabled/grey (loading state)
+- [ ] Page loads without errors, and the page's own loading skeleton clears without waiting on the phone RPC
+- [ ] "Call Cook" button starts disabled/grey (loading state), independently of the rest of the page
 - [ ] Within 1-2 seconds, button becomes active red with phone number on second line
 - [ ] Phone number displayed matches the cook's actual phone (verify in Supabase or from order details)
 - [ ] Clicking button initiates a call (tel: link works)
@@ -75,10 +75,21 @@
 
 ---
 
-### Test 5: Missing Cook (RPC Authorization Edge Case)
-**Scenario:** Access an order that doesn't belong to the logged-in customer (or use SQL to test with a different customer_id if reproducible).
+### Test 5a: Unauthorized Order (Redirect, No Disclosure)
+**Scenario:** Access an order that doesn't belong to the logged-in customer.
 
-- [ ] RPC returns NULL (authorization denied)
+- [ ] Page redirects to `/orders` with an "Order not found" toast
+- [ ] Redirect happens before the phone RPC ever runs — no order, item, or phone data is disclosed
+
+**Expected:** ✓ Pass  
+**Observed:** ___________
+
+---
+
+### Test 5b: Authorized Order, RPC Returns No Phone
+**Scenario:** Access an order that *does* belong to the logged-in customer, where `get_order_cook_phone` resolves to `null`.
+
+- [ ] Order page loads normally (order, items, status all render)
 - [ ] Button renders "Phone unavailable" state
 - [ ] No crash or expose of sensitive data
 

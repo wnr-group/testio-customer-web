@@ -101,15 +101,17 @@ export default function OrderDetailPage() {
       }
       setOrder(orderData as unknown as OrderRow);
 
-      const { data: phoneData, error: phoneError } = await supabase.rpc(
-        "get_order_cook_phone",
-        { p_order_id: id }
-      );
-      if (phoneError) {
-        console.error("Fetch cook phone error:", phoneError);
-      }
-      setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
-      setCookPhoneLoading(false);
+      // Runs independently of the main load flow so setLoading(false) below
+      // doesn't wait on it — the button has its own cookPhoneLoading state.
+      supabase
+        .rpc("get_order_cook_phone", { p_order_id: id })
+        .then(({ data: phoneData, error: phoneError }) => {
+          if (phoneError) {
+            console.error("Fetch cook phone error:", phoneError);
+          }
+          setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+          setCookPhoneLoading(false);
+        });
 
       const { data: itemsData } = await supabase
         .from("order_items")

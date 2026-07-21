@@ -84,10 +84,11 @@ export default function NewAddressPage() {
         return;
       }
 
-      const { count } = await supabase
+      const { count, error: countError } = await supabase
         .from("customer_addresses")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
+      if (countError) throw countError;
 
       const makeDefault = picked.isDefault || (count ?? 0) === 0;
 
