@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'http',
+        hostname: '192.168.1.20',
+        port: '54341',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'http',
         hostname: '192.168.1.108',
         port: '54341',
         pathname: '/storage/v1/object/public/**',
@@ -23,6 +29,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: '127.0.0.1',
+        port: '54341',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
         port: '54341',
         pathname: '/storage/v1/object/public/**',
       },

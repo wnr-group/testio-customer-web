@@ -42,8 +42,10 @@ export default function EditAddressPage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
         console.error("Failed to load address", error);
+        setNotFound(true);
+      } else if (!data) {
         setNotFound(true);
       } else {
         setExisting(data);

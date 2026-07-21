@@ -162,7 +162,7 @@ export default function CheckoutPage() {
           customer_id: user.id,
           cook_id: cookId,
           status: "pending",
-          payment_status: "pending",
+          payment_status: "paid",
           subtotal: subtotal,
           tax: tax,
           delivery_fee: 0,
