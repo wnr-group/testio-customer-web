@@ -32,6 +32,30 @@ export default function NewAddressPage() {
         return;
       }
 
+      // 1. Use GPS if permission is already granted — avoids an unexpected prompt.
+      if (typeof navigator !== "undefined" && navigator.geolocation) {
+        try {
+          const permStatus = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+          if (permStatus.state === "granted") {
+            const geo = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => resolve(null),
+                { timeout: 5000, maximumAge: 60000 }
+              );
+            });
+            if (geo) {
+              setInitialCenter(geo);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {
+          // Permissions API unsupported — fall through to saved address
+        }
+      }
+
+      // 2. Fall back to last saved address
       const { data } = await supabase
         .from("customer_addresses")
         .select("lat, lng")
@@ -65,13 +89,23 @@ export default function NewAddressPage() {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
 
+      const makeDefault = picked.isDefault || (count ?? 0) === 0;
+
+      if (makeDefault) {
+        const { error: updateError } = await supabase
+          .from("customer_addresses")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+        if (updateError) throw updateError;
+      }
+
       const { error } = await supabase.from("customer_addresses").insert({
         user_id: user.id,
         label: picked.label,
         address_line: picked.address,
         lat: picked.lat,
         lng: picked.lng,
-        is_default: (count ?? 0) === 0,
+        is_default: makeDefault,
       });
       if (error) throw error;
 
