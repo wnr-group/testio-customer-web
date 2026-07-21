@@ -87,13 +87,14 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
   // Debounced place search.
   useEffect(() => {
     if (!query.trim()) {
-      setResults([])
-      return
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults([]);
+      return;
     }
     const t = setTimeout(async () => {
-      setResults(await searchPlaces(query))
-    }, 300)
-    return () => clearTimeout(t)
+      setResults(await searchPlaces(query));
+    }, 300);
+    return () => clearTimeout(t);
   }, [query])
 
   const pickResult = (r: PlaceResult) => {
