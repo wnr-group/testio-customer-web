@@ -15,6 +15,7 @@ export type PickedLocation = {
   lng: number
   label: string // "Home" | "Work" | "Other"
   address: string // human-readable place name
+  isDefault: boolean
 }
 
 type Props = {
@@ -23,18 +24,22 @@ type Props = {
   onClose: () => void
   onConfirm: (loc: PickedLocation) => void
   saving?: boolean
+  initialLabel?: string
+  initialAddress?: string
+  initialIsDefault?: boolean
 }
 
 const LABELS = ['Home', 'Work', 'Other']
 
-export default function LocationPicker({ open, initialCenter, onClose, onConfirm, saving }: Props) {
+export default function LocationPicker({ open, initialCenter, onClose, onConfirm, saving, initialLabel, initialAddress, initialIsDefault }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
 
   const [coords, setCoords] = useState(initialCenter)
-  const [address, setAddress] = useState('')
-  const [label, setLabel] = useState('Home')
+  const [address, setAddress] = useState(initialAddress ?? '')
+  const [label, setLabel] = useState(initialLabel ?? 'Home')
+  const [isDefault, setIsDefault] = useState(initialIsDefault ?? false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PlaceResult[]>([])
   const [geocoding, setGeocoding] = useState(false)
@@ -75,7 +80,9 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
     })
     map.on('load', () => map.resize())
 
-    void updateFromLngLat(initialCenter.lng, initialCenter.lat)
+    if (!initialAddress) {
+      void updateFromLngLat(initialCenter.lng, initialCenter.lat)
+    }
 
     return () => {
       map.remove()
@@ -194,10 +201,23 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
           </div>
         </div>
 
+        {/* Set as default checkbox */}
+        <div className="px-5 pt-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300"
+            />
+            Set as default
+          </label>
+        </div>
+
         {/* Confirm */}
         <div className="px-5 py-4 mt-2">
           <Button
-            onClick={() => onConfirm({ lat: coords.lat, lng: coords.lng, label, address })}
+            onClick={() => onConfirm({ lat: coords.lat, lng: coords.lng, label, address, isDefault })}
             disabled={!address || geocoding || saving}
             className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white rounded-xl h-11 font-bold"
           >

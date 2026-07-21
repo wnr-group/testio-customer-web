@@ -1,0 +1,142 @@
+diff --git a/app/(auth)/order/[id]/page.tsx b/app/(auth)/order/[id]/page.tsx
+index 4b1ec45..bdf4b98 100644
+--- a/app/(auth)/order/[id]/page.tsx
++++ b/app/(auth)/order/[id]/page.tsx
+@@ -1,21 +1,22 @@
+ "use client";
+ 
+ import { useEffect, useState } from "react";
+ import Link from "next/link";
+ import Image from "next/image";
+ import dynamic from "next/dynamic";
+ import { useParams, useRouter } from "next/navigation";
+ import { createClient } from "@/lib/supabase/client";
+ import { useRealtimeOrder, type OrderStatus } from "@/hooks/useRealtimeOrder";
+ import StatusStepper from "@/components/order/StatusStepper";
+-import { Button } from "@/components/ui/button";
++import { Button, buttonVariants } from "@/components/ui/button";
++import { cn } from "@/lib/utils";
+ import { Card } from "@/components/ui/card";
+ import { Separator } from "@/components/ui/separator";
+ import { Skeleton } from "@/components/ui/skeleton";
+ import { toast } from "sonner";
+ import {
+   ArrowLeft,
+   Clock,
+   Phone,
+   Star,
+   Utensils,
+@@ -62,20 +63,22 @@ interface OrderRow {
+ export default function OrderDetailPage() {
+   const { id } = useParams<{ id: string }>();
+   const router = useRouter();
+   const supabase = createClient();
+ 
+   const [order, setOrder] = useState<OrderRow | null>(null);
+   const [items, setItems] = useState<OrderItemRow[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [hasReview, setHasReview] = useState(false);
+   const [cancelling, setCancelling] = useState(false);
++  const [cookPhone, setCookPhone] = useState<string | null>(null);
++  const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
+ 
+   const { status: liveStatus } = useRealtimeOrder(id);
+ 
+   useEffect(() => {
+     async function load() {
+       const {
+         data: { user },
+       } = await supabase.auth.getUser();
+       if (!user) {
+         router.push("/login");
+@@ -91,20 +94,30 @@ export default function OrderDetailPage() {
+         .eq("id", id)
+         .single();
+ 
+       if (orderError || !orderData) {
+         toast.error("Order not found");
+         router.push("/orders");
+         return;
+       }
+       setOrder(orderData as unknown as OrderRow);
+ 
++      const { data: phoneData, error: phoneError } = await supabase.rpc(
++        "get_order_cook_phone",
++        { p_order_id: id }
++      );
++      if (phoneError) {
++        console.error("Fetch cook phone error:", phoneError);
++      }
++      setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
++      setCookPhoneLoading(false);
++
+       const { data: itemsData } = await supabase
+         .from("order_items")
+         .select("id, quantity, unit_price, total_price, dishes ( name, image_url )")
+         .eq("order_id", id);
+       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
+ 
+       if (orderData.status === "completed") {
+         const { data: reviewData } = await supabase
+           .from("reviews")
+           .select("id")
+@@ -250,28 +263,51 @@ export default function OrderDetailPage() {
+                   <Clock className="size-3" /> Pickup: {order.pickup_time}
+                 </p>
+               ) : (
+                 <p className="text-slate-400 text-[11px] font-semibold mt-0.5 capitalize">
+                   {order.delivery_type || "delivery"}
+                 </p>
+               )}
+             </div>
+           </div>
+ 
+-          <Button
+-            disabled
+-            title="Calling coming soon"
+-            className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
+-          >
+-            <Phone className="size-3.5" />
+-            Call Cook
+-          </Button>
++          {cookPhoneLoading ? (
++            <Button
++              disabled
++              className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
++            >
++              <Phone className="size-3.5" />
++              Call Cook
++            </Button>
++          ) : cookPhone ? (
++            <a
++              href={`tel:${cookPhone}`}
++              className={cn(
++                buttonVariants({ variant: "default" }),
++                "bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 shrink-0 shadow-none"
++              )}
++            >
++              <Phone className="size-3.5" />
++              <div className="flex flex-col leading-none">
++                <span>Call Cook</span>
++                <span className="text-[10px]">{cookPhone}</span>
++              </div>
++            </a>
++          ) : (
++            <Button
++              disabled
++              className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
++            >
++              <Phone className="size-3.5" />
++              Phone unavailable
++            </Button>
++          )}
+         </Card>
+ 
+         {/* Itemized Bill */}
+         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 mb-6">
+           <h2 className="text-sm font-bold text-[#091A36] mb-4">Order Items</h2>
+           <div className="flex flex-col divide-y divide-slate-100">
+             {items.map((item) => (
+               <div key={item.id} className="flex items-center gap-4 py-3.5 first:pt-0 last:pb-0">
+                 <div className="size-14 relative rounded-xl overflow-hidden bg-slate-50 border border-slate-150 shrink-0">
+                   {item.dishes?.image_url ? (
