@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import { cn } from "@/lib/utils";
 import {
   MapPin,
   Clock,
   ChevronRight,
   ChevronLeft,
   Utensils,
-  PhoneOff,
+  Phone,
   Frown,
   BookOpen,
 } from "lucide-react";
@@ -43,6 +44,8 @@ export default function CookProfilePage() {
   const [cook, setCook] = useState<CookProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [cookPhone, setCookPhone] = useState<string | null>(null);
+  const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCook() {
@@ -62,6 +65,18 @@ export default function CookProfilePage() {
 
       setCook(data);
       setLoading(false);
+
+      // Runs independently of the main load flow — the button has its own
+      // cookPhoneLoading state, so this never blocks the page skeleton.
+      supabase
+        .rpc("get_cook_phone", { p_cook_id: id })
+        .then(({ data: phoneData, error: phoneError }) => {
+          if (phoneError) {
+            console.error("Fetch cook phone error:", phoneError);
+          }
+          setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+          setCookPhoneLoading(false);
+        });
     }
     fetchCook();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,14 +216,35 @@ export default function CookProfilePage() {
               </Card>
             )}
 
-            <button
-              disabled
-              title="Masked calling is not available on web yet"
-              className="w-full lg:w-fit inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-slate-400 font-bold text-xs tracking-wider uppercase px-5 h-10 cursor-not-allowed"
-            >
-              <PhoneOff className="size-3.5" />
-              Call Cook
-            </button>
+            {cookPhoneLoading ? (
+              <button
+                disabled
+                className="w-full lg:w-fit inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-slate-400 font-bold text-xs tracking-wider uppercase px-5 h-10 cursor-not-allowed"
+              >
+                <Phone className="size-3.5" />
+                Call Cook
+              </button>
+            ) : cookPhone ? (
+              <a
+                href={`tel:${cookPhone}`}
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "w-full lg:w-fit bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl gap-2 font-bold text-xs tracking-wider uppercase px-5 h-10"
+                )}
+              >
+                <Phone className="size-3.5" />
+                Call Cook
+              </a>
+            ) : (
+              <button
+                disabled
+                title="Phone unavailable"
+                className="w-full lg:w-fit inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-slate-400 font-bold text-xs tracking-wider uppercase px-5 h-10 cursor-not-allowed"
+              >
+                <Phone className="size-3.5" />
+                Phone unavailable
+              </button>
+            )}
           </div>
 
           <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-5">
