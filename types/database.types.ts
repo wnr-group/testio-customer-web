@@ -1476,6 +1476,10 @@ export type Database = {
           lng: number
         }[]
       }
+      get_cook_open_status: {
+        Args: { p_cook_id: string }
+        Returns: boolean
+      }
       get_delivery_order_details: {
         Args: { p_assignment_id: string }
         Returns: Json

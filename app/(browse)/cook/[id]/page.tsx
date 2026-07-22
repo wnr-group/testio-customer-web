@@ -44,6 +44,7 @@ export default function CookProfilePage() {
   const [cook, setCook] = useState<CookProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [cookPhone, setCookPhone] = useState<string | null>(null);
   const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
 
@@ -51,11 +52,11 @@ export default function CookProfilePage() {
     async function fetchCook() {
       if (!id) return;
       setLoading(true);
-      const { data, error } = await supabase
-        .from("cook_profiles")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const [cookResult, openStatusResult] = await Promise.all([
+        supabase.from("cook_profiles").select("*").eq("id", id).maybeSingle(),
+        supabase.rpc("get_cook_open_status", { p_cook_id: id }),
+      ]);
+      const { data, error } = cookResult;
 
       if (error || !data) {
         setNotFound(true);
@@ -63,7 +64,12 @@ export default function CookProfilePage() {
         return;
       }
 
+      if (openStatusResult.error) {
+        console.error("Fetch cook open status error:", openStatusResult.error);
+      }
+
       setCook(data);
+      setIsOpen(openStatusResult.error ? false : Boolean(openStatusResult.data));
       setLoading(false);
 
       // Runs independently of the main load flow — the button has its own
@@ -153,7 +159,7 @@ export default function CookProfilePage() {
               (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
             }}
           />
-          {!cook.is_available && (
+          {!isOpen && (
             <div className="absolute inset-0 bg-black/55 backdrop-blur-[1px] flex items-center justify-center">
               <span className="bg-white/95 px-4 py-2 rounded-xl text-sm font-bold text-slate-800 tracking-wide">
                 Currently Offline
@@ -265,12 +271,12 @@ export default function CookProfilePage() {
                 <span className="text-slate-500">Status</span>
                 <span
                   className={
-                    cook.is_available
+                    isOpen
                       ? "text-emerald-600 font-bold"
                       : "text-slate-400 font-bold"
                   }
                 >
-                  {cook.is_available ? "Open now" : "Offline"}
+                  {isOpen ? "Open now" : "Offline"}
                 </span>
               </div>
             </Card>
