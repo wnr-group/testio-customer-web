@@ -95,8 +95,20 @@ export function useResolvedLocation() {
       }
       if (cancelled) return
 
-      // 3. Nothing to go on — ask the user to pick a spot.
-      setStatus('needs-picker')
+      // 3. Fallback to default city coords (Chennai)
+      const defaultLat = 13.0827
+      const defaultLng = 80.2707
+      try {
+        const label = (await reverseGeocode(defaultLat, defaultLng)) || 'Chennai, Tamil Nadu'
+        if (cancelled) return
+        setLocationState({ lat: defaultLat, lng: defaultLng, label, source: 'picked' })
+        setStatus('ready')
+      } catch (e) {
+        console.error('Failed to reverse geocode default city coords', e)
+        if (cancelled) return
+        setLocationState({ lat: defaultLat, lng: defaultLng, label: 'Chennai, Tamil Nadu', source: 'picked' })
+        setStatus('ready')
+      }
     })()
 
     return () => {
