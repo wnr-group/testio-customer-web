@@ -16,6 +16,33 @@ export type ResolvedLocation = {
 // needs-picker → no device location and no saved address; the user must pick one
 export type ResolveStatus = 'resolving' | 'ready' | 'needs-picker'
 
+const STORAGE_KEY = 'resolved_location'
+
+// Persisted across mounts (but not across browser sessions) so that
+// navigating away from /home and back doesn't re-run the resolution
+// chain and silently overwrite a location the user already picked.
+function loadStored(): ResolvedLocation | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed?.lat === 'number' && typeof parsed?.lng === 'number' && typeof parsed?.label === 'string') {
+      return parsed as ResolvedLocation
+    }
+  } catch {
+    // corrupted / private mode — ignore
+  }
+  return null
+}
+
+function storeLocation(loc: ResolvedLocation) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(loc))
+  } catch {
+    // private mode — session-only is fine
+  }
+}
+
 async function tryGeolocation(): Promise<{ lat: number; lng: number } | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null
   // Avoid re-prompting if the user has already denied permission.
@@ -38,10 +65,11 @@ async function tryGeolocation(): Promise<{ lat: number; lng: number } | null> {
 }
 
 /**
- * Resolves the user's delivery location on mount, in priority order:
- *   1. device geolocation (if permitted)
- *   2. their default saved address
- *   3. otherwise → status 'needs-picker' so the UI can ask them to choose a spot
+ * Resolves the user's delivery location, in priority order:
+ *   1. a location already persisted this session (a prior device/saved/picked resolution)
+ *   2. device geolocation (if permitted)
+ *   3. their default saved address
+ *   4. otherwise → status 'needs-picker' so the UI can ask them to choose a spot
  * Never falls back to a hardcoded location.
  */
 export function useResolvedLocation() {
@@ -49,6 +77,17 @@ export function useResolvedLocation() {
   const [status, setStatus] = useState<ResolveStatus>('resolving')
 
   useEffect(() => {
+    // 0. Already resolved/picked earlier this session — skip re-resolving
+    // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
+    const stored = loadStored()
+    if (stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLocationState(stored)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStatus('ready')
+      return
+    }
+
     let cancelled = false
 
     void (async () => {
@@ -60,8 +99,10 @@ export function useResolvedLocation() {
       if (geo) {
         const label = (await reverseGeocode(geo.lat, geo.lng)) || 'Current location'
         if (cancelled) return
-        setLocationState({ lat: geo.lat, lng: geo.lng, label, source: 'device' })
+        const resolved: ResolvedLocation = { lat: geo.lat, lng: geo.lng, label, source: 'device' }
+        setLocationState(resolved)
         setStatus('ready')
+        storeLocation(resolved)
         return
       }
 
@@ -80,13 +121,15 @@ export function useResolvedLocation() {
             .limit(1)
           const a = data?.[0]
           if (!cancelled && a && a.lat != null && a.lng != null) {
-            setLocationState({
+            const resolved: ResolvedLocation = {
               lat: Number(a.lat),
               lng: Number(a.lng),
               label: a.label || a.address_line || 'Saved address',
               source: 'saved',
-            })
+            }
+            setLocationState(resolved)
             setStatus('ready')
+            storeLocation(resolved)
             return
           }
         }
@@ -108,6 +151,7 @@ export function useResolvedLocation() {
   const setLocation = useCallback((loc: ResolvedLocation) => {
     setLocationState(loc)
     setStatus('ready')
+    storeLocation(loc)
   }, [])
 
   return { location, status, setLocation }
