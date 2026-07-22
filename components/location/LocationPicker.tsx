@@ -18,6 +18,14 @@ export type PickedLocation = {
   isDefault: boolean
 }
 
+export type SavedAddress = {
+  id: string
+  label: string
+  address_line: string
+  lat: number
+  lng: number
+}
+
 type Props = {
   open: boolean
   initialCenter: { lat: number; lng: number } // where the map opens (viewport only)
@@ -27,11 +35,24 @@ type Props = {
   initialLabel?: string
   initialAddress?: string
   initialIsDefault?: boolean
+  savedAddresses?: SavedAddress[] // when non-empty, shows a "pick an existing address" list before the map
+  onSelectSaved?: (addr: SavedAddress) => void // called instead of onConfirm — no DB write
 }
 
 const LABELS = ['Home', 'Work', 'Other']
 
-export default function LocationPicker({ open, initialCenter, onClose, onConfirm, saving, initialLabel, initialAddress, initialIsDefault }: Props) {
+export default function LocationPicker({
+  open,
+  initialCenter,
+  onClose,
+  onConfirm,
+  saving,
+  initialLabel,
+  initialAddress,
+  initialIsDefault,
+  savedAddresses,
+  onSelectSaved,
+}: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -131,6 +152,30 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
             <X className="size-5" />
           </button>
         </div>
+
+        {/* Saved addresses — pick one instead of dropping a new pin */}
+        {savedAddresses && savedAddresses.length > 0 && (
+          <div className="px-5 pt-4 flex flex-col gap-2">
+            <p className="text-xs font-semibold text-slate-500">Saved addresses</p>
+            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+              {savedAddresses.map((addr) => (
+                <button
+                  key={addr.id}
+                  type="button"
+                  onClick={() => onSelectSaved?.(addr)}
+                  className="w-full text-left flex items-start gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 transition-colors"
+                >
+                  <MapPin className="size-4 text-[#E8202A] mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800">{addr.label}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{addr.address_line}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs font-semibold text-slate-500 pt-1">Or add a new address</p>
+          </div>
+        )}
 
         {/* Search */}
         <div className="px-5 pt-4 relative">

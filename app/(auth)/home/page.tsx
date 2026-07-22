@@ -17,7 +17,7 @@ import { CookCard } from "@/components/CookCard";
 import { DishCard } from "@/components/DishCard";
 import { useCartStore } from "@/stores/cartStore";
 import { useResolvedLocation } from "@/hooks/useResolvedLocation";
-import type { PickedLocation } from "@/components/location/LocationPicker";
+import type { PickedLocation, SavedAddress } from "@/components/location/LocationPicker";
 
 // Dynamically import browser-only (Mapbox GL) components.
 const MapView = dynamic(() => import("@/components/map/MapView"), { ssr: false });
@@ -49,6 +49,7 @@ function HomeContent() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [savingAddr, setSavingAddr] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const autoOpenedRef = useRef(false);
 
   const [cooks, setCooks] = useState<any[]>([]);
@@ -69,6 +70,33 @@ function HomeContent() {
       setPickerOpen(true);
     }
   }, [status]);
+
+  // Load the customer's saved addresses each time the picker opens, so they
+  // can pick an existing one instead of always dropping a new pin.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let cancelled = false;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("customer_addresses")
+        .select("id, label, address_line, lat, lng")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false });
+      if (error) {
+        console.error("Failed to load saved addresses", error);
+        return;
+      }
+      if (!cancelled) setSavedAddresses((data as SavedAddress[]) || []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerOpen]);
 
   // Fetch cooks + dishes whenever the resolved location changes.
   useEffect(() => {
@@ -163,6 +191,18 @@ function HomeContent() {
       });
       setPickerOpen(false);
     }
+  };
+
+  // Use an already-saved address for this session — updates local state
+  // only, unlike handlePickLocation above, which always inserts a new row.
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setLocation({
+      lat: addr.lat,
+      lng: addr.lng,
+      label: addr.address_line || addr.label,
+      source: "saved",
+    });
+    setPickerOpen(false);
   };
 
   const cookMarkers = cooks
@@ -437,6 +477,8 @@ function HomeContent() {
         onClose={() => setPickerOpen(false)}
         onConfirm={handlePickLocation}
         saving={savingAddr}
+        savedAddresses={savedAddresses}
+        onSelectSaved={handleSelectSavedAddress}
       />
     </div>
   );
