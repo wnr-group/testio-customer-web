@@ -47,11 +47,8 @@ export default function CookReviewsPage() {
           .order("created_at", { ascending: false }),
       ]);
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCook(cookData ?? null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReviews((reviewData as unknown as ReviewRow[]) ?? []);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
     }
 

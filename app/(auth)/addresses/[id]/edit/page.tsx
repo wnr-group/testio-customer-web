@@ -40,6 +40,7 @@ export default function EditAddressPage() {
         .select("*")
         .eq("id", id)
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .maybeSingle();
 
       if (error) {

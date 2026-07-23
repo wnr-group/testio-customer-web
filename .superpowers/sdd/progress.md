@@ -1,38 +1,28 @@
-# Subagent-Driven Development Progress — Address Management Gap-Closing (TES-172)
+# Subagent-Driven Development Progress — Two-Step Change Address Flow
 
-**Plan:** `docs/superpowers/plans/2026-07-21-address-management-gaps.md`  
-**Branch:** main  
-**Started:** 2026-07-21
+**Plan:** `docs/superpowers/plans/2026-07-23-two-step-change-address-flow.md`  
+**Branch:** feat/tes-171-tes-172-call-cook-address-management  
+**Started:** 2026-07-23  
+**BASE commit:** 8500779 (commit before Task 1 implementation)
 
 ## Task Status
 
-- [x] Task 1: Migrate reverse geocoding to Mapbox v6
-- [x] Task 2: Add "Set as default" checkbox and wire into New Address
-- [x] Task 3: Prefill label/address/default in edit mode
+- [x] Task 1: Gate map picker behind an explicit Add New Address step — APPROVED
+- [x] Task 2: Manual Regression & QA Verification — AUTOMATED CHECKS PASSED (Steps 2-11 require manual browser QA by user)
+- [x] Task 3: Production Readiness Validation — Git validation PASS; Steps 2-13, 15-16 require manual browser QA by user
 
 ## Completed Tasks
 
-**Task 1: APPROVED** (commit 394bd37, review clean)
-- Endpoint migrated v5→v6, response extraction updated
-- Spec: ✅ Type-check ✓, manual browser test ✓
-- Code quality: ✅ null-safe, error handling preserved
+**Task 1: APPROVED** (commits 52ae41d + 98e47c1 + a6e9675 restore, review clean)
+**Task 2: AUTOMATED PASS** (tsc: 0 errors, lint: 0 errors / 1 pre-existing warning, build: 19/19 routes)
+**Task 3: GIT VALIDATION PASS** (Task 3 Step 14 verified; manual browser/DevTools steps NOT VERIFIED — require human QA)
 
-**Task 2: APPROVED** (commit 710d5c4, review clean)
-- Types extended, checkbox UI added, state init from prefill props
-- Skip geocode when prefilled (for edit mode)
-- New Address handleConfirm wired for single-default invariant
-- Spec: ✅ all 8 requirements met
-- Code quality: ✅ error handling, state management, no race conditions
+**Final review fixes applied:**
+- c6df72b: removed stray empty files `()` and `{})` from git index
+- f5ca4de: eager load savedAddresses on mount (critical bug fix — first picker open now shows list)
 
-**Task 3: APPROVED** (commit 082bc75, review clean)
-- Edit page state refactored to load full Address row
-- Four prefill props passed to LocationPicker (initialLabel, initialAddress, initialIsDefault)
-- handleConfirm enforces single-default on UPDATE like Task 2 did on INSERT
-- Spec: ✅ all 6 requirements met
-- Code quality: ✅ state management, null-safety, follows codebase patterns
+## Minor Findings from Final Review
 
-## Branch Summary
-
-**Commits:** 3 (394bd37, 710d5c4, 082bc75)
-**Files changed:** lib/utils.ts, components/location/LocationPicker.tsx, app/(auth)/addresses/new/page.tsx, app/(auth)/addresses/[id]/edit/page.tsx
-**All reviews:** clean — ready for final whole-branch verification
+- Unmounted-setState on fire-and-forget phone fetch (order/[id]/page.tsx:104, cook/[id]/page.tsx) — pre-existing pattern, no cancellation guard
+- database.types.ts missing entries for get_cook_phone and get_order_cook_phone RPCs — pre-existing inconsistency
+- loadStored() in useResolvedLocation.ts doesn't validate `source` field

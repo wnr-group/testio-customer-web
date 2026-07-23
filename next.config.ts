@@ -21,13 +21,31 @@ const nextConfig: NextConfig = {
         ? [
             {
               protocol: 'http' as const,
+              hostname: '192.168.1.12',
+              port: '54341',
+              pathname: '/storage/v1/object/public/**',
+            },
+            {
+              protocol: 'http' as const,
               hostname: '192.168.1.20',
               port: '54341',
               pathname: '/storage/v1/object/public/**',
             },
             {
               protocol: 'http' as const,
+              hostname: '192.168.1.82',
+              port: '54341',
+              pathname: '/storage/v1/object/public/**',
+            },
+            {
+              protocol: 'http' as const,
               hostname: '192.168.1.108',
+              port: '54341',
+              pathname: '/storage/v1/object/public/**',
+            },
+            {
+              protocol: 'http' as const,
+              hostname: '192.168.31.31',
               port: '54341',
               pathname: '/storage/v1/object/public/**',
             },

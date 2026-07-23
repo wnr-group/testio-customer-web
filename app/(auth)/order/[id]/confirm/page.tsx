@@ -32,6 +32,19 @@ interface ConfirmedOrder {
   order_items: OrderItemRow[];
 }
 
+function formatPickupTime(timeStr: string | null): string {
+  if (!timeStr) return "";
+  const d = new Date(timeStr);
+  if (isNaN(d.getTime())) return timeStr;
+  return d.toLocaleString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function OrderConfirmPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -139,7 +152,7 @@ export default function OrderConfirmPage() {
               <Clock className="size-4 shrink-0 text-amber-600" />
               <div className="text-[11px] leading-tight">
                 <p className="font-bold">Pickup Time</p>
-                <p className="mt-0.5">{order.pickup_time || "To be confirmed"}</p>
+                <p className="mt-0.5">{formatPickupTime(order.pickup_time) || "To be confirmed"}</p>
               </div>
             </div>
           ) : (

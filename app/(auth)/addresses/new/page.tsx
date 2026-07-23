@@ -60,6 +60,7 @@ export default function NewAddressPage() {
         .from("customer_addresses")
         .select("lat, lng")
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -87,7 +88,8 @@ export default function NewAddressPage() {
       const { count, error: countError } = await supabase
         .from("customer_addresses")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .eq("is_deleted", false);
       if (countError) throw countError;
 
       const makeDefault = picked.isDefault || (count ?? 0) === 0;

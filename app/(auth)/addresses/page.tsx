@@ -41,6 +41,7 @@ export default function AddressesPage() {
         .from("customer_addresses")
         .select("*")
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .order("is_default", { ascending: false });
 
       if (error) {
@@ -61,7 +62,7 @@ export default function AddressesPage() {
     try {
       const { error } = await supabase
         .from("customer_addresses")
-        .delete()
+        .update({ is_deleted: true })
         .eq("id", deleteTarget.id);
       if (error) throw error;
 

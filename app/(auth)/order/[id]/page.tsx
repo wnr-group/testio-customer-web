@@ -60,6 +60,19 @@ interface OrderRow {
   cook_profiles: { kitchen_name: string; profile_image_url: string | null } | null;
 }
 
+function formatPickupTime(timeStr: string | null): string {
+  if (!timeStr) return "";
+  const d = new Date(timeStr);
+  if (isNaN(d.getTime())) return timeStr;
+  return d.toLocaleString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -106,6 +119,7 @@ export default function OrderDetailPage() {
       supabase
         .rpc("get_order_cook_phone", { p_order_id: id })
         .then(({ data: phoneData, error: phoneError }) => {
+          if (!isMounted) return;
           if (phoneError) {
             console.error("Fetch cook phone error:", phoneError);
           }
@@ -125,14 +139,20 @@ export default function OrderDetailPage() {
           .select("id")
           .eq("order_id", id)
           .maybeSingle();
-        setHasReview(!!reviewData);
+        if (isMounted) setHasReview(!!reviewData);
       }
 
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
 
+    let isMounted = true;
     load();
-  }, [id, supabase, router]);
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";
   const canCancel = currentStatus === "pending" || currentStatus === "accepted";
@@ -262,7 +282,7 @@ export default function OrderDetailPage() {
               <p className="font-bold text-[#091A36] text-sm truncate">{kitchenName}</p>
               {order.delivery_type === "pickup" && order.pickup_time ? (
                 <p className="text-slate-400 text-[11px] font-semibold flex items-center gap-1 mt-0.5">
-                  <Clock className="size-3" /> Pickup: {order.pickup_time}
+                  <Clock className="size-3" /> Pickup: {formatPickupTime(order.pickup_time)}
                 </p>
               ) : (
                 <p className="text-slate-400 text-[11px] font-semibold mt-0.5 capitalize">

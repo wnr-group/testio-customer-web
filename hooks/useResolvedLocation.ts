@@ -26,7 +26,12 @@ function loadStored(): ResolvedLocation | null {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (typeof parsed?.lat === 'number' && typeof parsed?.lng === 'number' && typeof parsed?.label === 'string') {
+    if (
+      typeof parsed?.lat === 'number' && 
+      typeof parsed?.lng === 'number' && 
+      typeof parsed?.label === 'string' &&
+      typeof parsed?.source === 'string'
+    ) {
       return parsed as ResolvedLocation
     }
   } catch {
@@ -77,20 +82,18 @@ export function useResolvedLocation() {
   const [status, setStatus] = useState<ResolveStatus>('resolving')
 
   useEffect(() => {
-    // 0. Already resolved/picked earlier this session — skip re-resolving
-    // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
-    const stored = loadStored()
-    if (stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLocationState(stored)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setStatus('ready')
-      return
-    }
-
     let cancelled = false
 
     void (async () => {
+      // 0. Already resolved/picked earlier this session — skip re-resolving
+      // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
+      const stored = loadStored()
+      if (stored) {
+        setLocationState(stored)
+        setStatus('ready')
+        return
+      }
+
       const supabase = createClient()
 
       // 1. Device geolocation

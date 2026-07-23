@@ -68,15 +68,18 @@ export default function CookProfilePage() {
         console.error("Fetch cook open status error:", openStatusResult.error);
       }
 
-      setCook(data);
-      setIsOpen(openStatusResult.error ? false : Boolean(openStatusResult.data));
-      setLoading(false);
+      if (isMounted) {
+        setCook(data);
+        setIsOpen(openStatusResult.error ? false : Boolean(openStatusResult.data));
+        setLoading(false);
+      }
 
       // Runs independently of the main load flow — the button has its own
       // cookPhoneLoading state, so this never blocks the page skeleton.
       supabase
         .rpc("get_cook_phone", { p_cook_id: id })
         .then(({ data: phoneData, error: phoneError }) => {
+          if (!isMounted) return;
           if (phoneError) {
             console.error("Fetch cook phone error:", phoneError);
           }
@@ -84,7 +87,13 @@ export default function CookProfilePage() {
           setCookPhoneLoading(false);
         });
     }
+    
+    let isMounted = true;
     fetchCook();
+    
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 

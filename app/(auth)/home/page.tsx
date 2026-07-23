@@ -84,6 +84,7 @@ function HomeContent() {
         .from("customer_addresses")
         .select("id, label, address_line, lat, lng")
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .order("is_default", { ascending: false });
       if (error) {
         console.error("Failed to load saved addresses", error);
@@ -166,7 +167,8 @@ function HomeContent() {
         const { count } = await supabase
           .from("customer_addresses")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("is_deleted", false);
         const { error } = await supabase.from("customer_addresses").insert({
           user_id: user.id,
           label: picked.label,

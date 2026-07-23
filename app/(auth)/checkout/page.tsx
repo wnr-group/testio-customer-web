@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,15 +29,36 @@ import {
   Bike
 } from "lucide-react";
 
-// Mock pickup slots
-const PICKUP_SLOTS = [
-  "12:00 PM - 12:30 PM",
-  "12:30 PM - 1:00 PM",
-  "1:00 PM - 1:30 PM",
-  "6:30 PM - 7:00 PM",
-  "7:00 PM - 7:30 PM",
-  "7:30 PM - 8:00 PM"
-];
+// supabase.functions.invoke() wraps every non-2xx response in a generic
+// FunctionsHttpError whose .message is always "Edge Function returned a
+// non-2xx status code" — the actual reason only exists in the unread
+// response body (error.context), so it has to be read out explicitly.
+async function getEdgeFunctionErrorMessage(error: unknown, fallback: string): Promise<string> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = await error.context.json();
+      if (typeof body?.error === "string") return body.error;
+    } catch {
+      // Response body wasn't JSON — fall back to the generic SDK message below.
+    }
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
+// Generate pickup slot options (30 min intervals for next 2 hours)
+function getPickupSlots(): { label: string; value: string }[] {
+  const slots: { label: string; value: string }[] = [];
+  const now = new Date();
+  for (const mins of [30, 60, 90, 120]) {
+    const t = new Date(now.getTime() + mins * 60 * 1000);
+    const label =
+      mins < 60
+        ? `${mins} min (${t.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })})`
+        : `${mins / 60} hr (${t.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })})`;
+    slots.push({ label, value: t.toISOString() });
+  }
+  return slots;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -52,6 +74,7 @@ export default function CheckoutPage() {
   const [submittingOrder, setSubmittingOrder] = useState(false);
 
   // Checkout Options state
+  const pickupSlots = useMemo(() => getPickupSlots(), []);
   const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">("delivery");
   const [deliveryAddressId, setDeliveryAddressId] = useState<string | null>(null);
   const [pickupTime, setPickupTime] = useState<string>("");
@@ -76,6 +99,7 @@ export default function CheckoutPage() {
           .from("customer_addresses")
           .select("*")
           .eq("user_id", authUser.id)
+          .eq("is_deleted", false)
           .order("is_default", { ascending: false });
 
         if (addrError) throw addrError;
@@ -133,72 +157,62 @@ export default function CheckoutPage() {
     }
 
     setSubmittingOrder(true);
+    let pendingOrderId: string | null = null;
     try {
-      // Validate max_quantity limit from database before creating order
-      const dishIds = items.map((i) => i.dishId);
-      const { data: dbDishes, error: fetchError } = await supabase
-        .from("dishes")
-        .select("id, name, max_quantity")
-        .in("id", dishIds);
-
-      if (fetchError || !dbDishes) {
-        throw new Error(fetchError?.message || "Failed to validate dish quantities.");
-      }
-
-      for (const item of items) {
-        const dbDish = dbDishes.find((d) => d.id === item.dishId);
-        if (!dbDish) {
-          throw new Error(`Dish "${item.name}" is no longer available.`);
-        }
-        if (item.qty > dbDish.max_quantity) {
-          throw new Error(`Requested quantity for "${item.name}" exceeds the maximum limit of ${dbDish.max_quantity}.`);
-        }
-      }
-
-      // 1. Create order record (order_number is generated server-side by a trigger)
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          customer_id: user.id,
+      // 1. Create order via the create-order edge function (same path the
+      // mobile app uses) — validates cook/dish availability, generates the
+      // order_number, and creates the Razorpay order (razorpay_order_id).
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-order", {
+        body: {
           cook_id: cookId,
-          status: "pending",
-          payment_status: "pending",
-          subtotal: subtotal,
-          tax: tax,
-          delivery_fee: 0,
-          total: checkoutTotal,
+          items: items.map((item) => ({ dish_id: item.dishId, quantity: item.qty })),
+          pickup_time: deliveryType === "pickup" ? pickupTime : null,
           delivery_type: deliveryType,
-          delivery_address_id: deliveryType === "delivery" ? deliveryAddressId : null,
-          pickup_time: deliveryType === "pickup" ? pickupTime : null
-        })
-        .select()
-        .single();
+          address_id: deliveryType === "delivery" ? deliveryAddressId : undefined,
+        },
+      });
 
-      if (orderError) throw orderError;
+      if (orderError) throw new Error(await getEdgeFunctionErrorMessage(orderError, "Failed to create order"));
 
-      // 2. Insert order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        dish_id: item.dishId,
-        quantity: item.qty,
-        unit_price: item.price,
-        total_price: item.price * item.qty
-      }));
+      const { order, razorpay_order_id: razorpayOrderId } = orderData;
+      pendingOrderId = order.id;
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+      // 2. Complete payment. Web Razorpay Checkout isn't integrated yet, so
+      // mirror the DEV_MODE mock flow the mobile app uses (this environment
+      // runs with DEV_MODE=true and a placeholder Razorpay key) rather than
+      // silently marking a real transaction as paid.
+      const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const isMockPayment = !razorpayKeyId || razorpayKeyId.includes("XXXXX");
 
-      if (itemsError) throw itemsError;
+      if (!isMockPayment) {
+        throw new Error("Online payment is not yet configured for web checkout.");
+      }
+
+      const { error: verifyError } = await supabase.functions.invoke("verify-payment", {
+        body: {
+          razorpay_order_id: razorpayOrderId,
+          razorpay_payment_id: `mock_payment_${order.id}`,
+          razorpay_signature: "mock_signature",
+        },
+      });
+
+      if (verifyError) throw new Error(await getEdgeFunctionErrorMessage(verifyError, "Failed to verify payment"));
 
       toast.success("Order placed successfully!");
-      
+
       // 3. Clear store & redirect
       clear();
       router.push(`/order/${order.id}/confirm`);
     } catch (err: any) {
       console.error("Order placement error:", err);
       toast.error(err.message || "Failed to place order. Please try again.");
+      // Payment didn't complete — remove the pending order rather than leaving
+      // an unpayable order stuck in the cook's queue forever.
+      if (pendingOrderId) {
+        await supabase.from("orders").delete().eq("id", pendingOrderId).then(({ error }) => {
+          if (error) console.error(error);
+        });
+      }
     } finally {
       setSubmittingOrder(false);
     }
@@ -460,11 +474,11 @@ export default function CheckoutPage() {
                 <div className="flex flex-col gap-4">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Pickup Time Slot</span>
                                 <div role="radiogroup" aria-label="Pickup Time Slot" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {PICKUP_SLOTS.map((slot) => {
-                      const isSelected = pickupTime === slot;
+                     {pickupSlots.map((slot) => {
+                      const isSelected = pickupTime === slot.value;
                       return (
                         <label
-                          key={slot}
+                          key={slot.value}
                           className={`border rounded-xl p-4 cursor-pointer transition-all flex items-center gap-3 bg-white focus-within:ring-2 focus-within:ring-[#C29B38] ${
                             isSelected
                               ? "border-[#C29B38] bg-[#FAF9F5] shadow-sm"
@@ -474,14 +488,14 @@ export default function CheckoutPage() {
                           <input
                             type="radio"
                             name="pickupTime"
-                            value={slot}
+                            value={slot.value}
                             checked={isSelected}
-                            onChange={() => setPickupTime(slot)}
+                            onChange={() => setPickupTime(slot.value)}
                             className="sr-only"
                           />
                           <Clock className={`size-4 shrink-0 ${isSelected ? "text-[#C29B38]" : "text-slate-400"}`} />
                           <span className={`text-xs font-bold ${isSelected ? "text-slate-850" : "text-slate-600"}`}>
-                            {slot}
+                            {slot.label}
                           </span>
                         </label>
                       );
