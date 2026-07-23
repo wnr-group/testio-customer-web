@@ -71,10 +71,9 @@ function HomeContent() {
     }
   }, [status]);
 
-  // Load the customer's saved addresses each time the picker opens, so they
-  // can pick an existing one instead of always dropping a new pin.
+  // Load saved addresses eagerly on mount and refresh each time the picker opens,
+  // so the list is ready before the first open (not just after pickerOpen fires).
   useEffect(() => {
-    if (!pickerOpen) return;
     let cancelled = false;
     (async () => {
       const {
