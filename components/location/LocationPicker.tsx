@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Button } from '@/components/ui/button'
-import { MapPin, Search, X, Loader2 } from 'lucide-react'
+import { MapPin, Search, X, Loader2, ArrowLeft } from 'lucide-react'
 import { reverseGeocode, searchPlaces, type PlaceResult } from '@/lib/utils'
 
 export type PickedLocation = {
@@ -65,9 +65,27 @@ export default function LocationPicker({
   const [results, setResults] = useState<PlaceResult[]>([])
   const [geocoding, setGeocoding] = useState(false)
 
+  // Two-step flow: show the saved-address list first (if there is one) and
+  // only mount the pin-drop map once the user explicitly asks to add a new
+  // address. Callers that never pass savedAddresses (add/edit address pages)
+  // always land straight on 'map', matching their existing behavior exactly.
+  const hasSavedAddresses = Boolean(savedAddresses && savedAddresses.length > 0)
+  const [view, setView] = useState<'list' | 'map'>(hasSavedAddresses ? 'list' : 'map')
+  const wasOpenRef = useRef(false)
+
+  // Reset to the correct starting view only on the closed→open transition,
+  // so an in-flight savedAddresses fetch completing while already open
+  // doesn't yank the user back to the list mid-pin-drop.
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      setView(hasSavedAddresses ? 'list' : 'map')
+    }
+    wasOpenRef.current = open
+  }, [open, hasSavedAddresses])
+
   // Initialise the map + draggable pin when the picker opens.
   useEffect(() => {
-    if (!open || !mapContainerRef.current) return
+    if (!open || view !== 'map' || !mapContainerRef.current) return
 
     const map = new mapboxgl.Map({
       accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN!,
@@ -110,11 +128,12 @@ export default function LocationPicker({
       mapRef.current = null
       markerRef.current = null
     }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, view]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced place search.
   useEffect(() => {
     if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([])
       return
     }
@@ -140,24 +159,41 @@ export default function LocationPicker({
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div>
-            <h3 className="font-bold text-slate-900">Choose your delivery location</h3>
-            <p className="text-xs text-slate-400">Search an area or drag the pin to your spot</p>
+          <div className="flex items-center gap-2 min-w-0">
+            {view === 'map' && hasSavedAddresses && (
+              <button
+                onClick={() => setView('list')}
+                aria-label="Back to saved addresses"
+                className="text-slate-400 hover:text-slate-700 p-1 -ml-1 rounded-full hover:bg-slate-100 transition-colors shrink-0"
+              >
+                <ArrowLeft className="size-4" />
+              </button>
+            )}
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-900">
+                {view === 'list' ? 'Choose a delivery address' : 'Choose your delivery location'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {view === 'list'
+                  ? 'Pick a saved address or add a new one'
+                  : 'Search an area or drag the pin to your spot'}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors shrink-0"
           >
             <X className="size-5" />
           </button>
         </div>
 
         {/* Saved addresses — pick one instead of dropping a new pin */}
-        {savedAddresses && savedAddresses.length > 0 && (
-          <div className="px-5 pt-4 flex flex-col gap-2">
+        {view === 'list' && savedAddresses && savedAddresses.length > 0 && (
+          <div className="px-5 pt-4 pb-2 flex flex-col gap-2">
             <p className="text-xs font-semibold text-slate-500">Saved addresses</p>
-            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
               {savedAddresses.map((addr) => (
                 <button
                   key={addr.id}
@@ -173,10 +209,18 @@ export default function LocationPicker({
                 </button>
               ))}
             </div>
-            <p className="text-xs font-semibold text-slate-500 pt-1">Or add a new address</p>
+            <button
+              type="button"
+              onClick={() => setView('map')}
+              className="w-full text-left text-xs font-bold text-[#E8202A] hover:underline pt-1 pb-1"
+            >
+              + Add a new address
+            </button>
           </div>
         )}
 
+        {view === 'map' && (
+        <>
         {/* Search */}
         <div className="px-5 pt-4 relative">
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3">
@@ -269,6 +313,8 @@ export default function LocationPicker({
             {saving ? <Loader2 className="size-4 animate-spin" /> : 'Confirm location'}
           </Button>
         </div>
+        </>
+        )}
       </div>
     </div>
   )
