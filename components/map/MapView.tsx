@@ -90,32 +90,16 @@ function buildCookPopupContent(
     root.appendChild(tags)
   }
 
-  const actions = document.createElement('div')
-  actions.style.cssText = 'display:flex;gap:6px;'
-
-  const profileBtn = document.createElement('button')
-  profileBtn.type = 'button'
-  profileBtn.textContent = 'View Profile'
-  profileBtn.style.cssText =
-    'flex:1;background:#E8202A;color:#fff;border:none;border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;cursor:pointer;'
-  profileBtn.addEventListener('click', (e) => {
-    e.stopPropagation()
+  const viewLink = document.createElement('a')
+  viewLink.textContent = 'View'
+  viewLink.href = `/cook/${mk.cookId}`
+  viewLink.style.cssText =
+    'display:block;text-align:center;background:#E8202A;color:#fff;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;text-decoration:none;margin-top:8px;'
+  viewLink.addEventListener('click', (e) => {
+    e.preventDefault()
     onViewProfile(mk.cookId)
   })
-  actions.appendChild(profileBtn)
-
-  const menuBtn = document.createElement('button')
-  menuBtn.type = 'button'
-  menuBtn.textContent = 'See Menu'
-  menuBtn.style.cssText =
-    'flex:1;background:#F1F5F9;color:#091A36;border:none;border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;cursor:pointer;'
-  menuBtn.addEventListener('click', (e) => {
-    e.stopPropagation()
-    onViewMenu(mk.cookId)
-  })
-  actions.appendChild(menuBtn)
-
-  root.appendChild(actions)
+  root.appendChild(viewLink)
   return root
 }
 
