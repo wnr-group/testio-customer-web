@@ -8,6 +8,8 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useRealtimeOrder, type OrderStatus } from "@/hooks/useRealtimeOrder";
 import type { DeliveryAssignmentRow } from "@/hooks/useRealtimeDeliveryAssignment";
+import { useRealtimeDeliveryAssignment } from "@/hooks/useRealtimeDeliveryAssignment";
+import DeliveryOtpCard from "@/components/order/DeliveryOtpCard";
 import StatusStepper from "@/components/order/StatusStepper";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,7 @@ export default function OrderDetailPage() {
   const [assignment, setAssignment] = useState<DeliveryAssignmentRow | null>(null);
 
   const { status: liveStatus } = useRealtimeOrder(id);
+  const { assignment: liveAssignment } = useRealtimeDeliveryAssignment(id);
 
   useEffect(() => {
     async function load() {
@@ -168,6 +171,14 @@ export default function OrderDetailPage() {
   }, [id]);
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";
+  const currentAssignment = liveAssignment ?? assignment;
+  const showDeliveryOtp =
+    order != null &&
+    order.delivery_type === "delivery" &&
+    !!currentAssignment?.otp_code &&
+    (currentAssignment.status === "assigned" || currentAssignment.status === "picked_up") &&
+    currentStatus !== "cancelled" &&
+    currentStatus !== "rejected";
   const canCancel = currentStatus === "pending" || currentStatus === "accepted";
 
   const handleCancelOrder = async () => {
@@ -278,6 +289,9 @@ export default function OrderDetailPage() {
             </div>
           </Card>
         )}
+
+        {/* Delivery OTP — only while a partner is actively assigned/en route */}
+        {showDeliveryOtp && <DeliveryOtpCard otp={currentAssignment!.otp_code!} />}
 
         {/* Cook Info Card */}
         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
