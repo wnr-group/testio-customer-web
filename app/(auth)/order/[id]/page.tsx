@@ -8,7 +8,8 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useRealtimeOrder, type OrderStatus } from "@/hooks/useRealtimeOrder";
 import StatusStepper from "@/components/order/StatusStepper";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +70,8 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [hasReview, setHasReview] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cookPhone, setCookPhone] = useState<string | null>(null);
+  const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
 
   const { status: liveStatus } = useRealtimeOrder(id);
 
@@ -97,6 +100,16 @@ export default function OrderDetailPage() {
         return;
       }
       setOrder(orderData as unknown as OrderRow);
+
+      const { data: phoneData, error: phoneError } = await supabase.rpc(
+        "get_order_cook_phone",
+        { p_order_id: id }
+      );
+      if (phoneError) {
+        console.error("Fetch cook phone error:", phoneError);
+      }
+      setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+      setCookPhoneLoading(false);
 
       const { data: itemsData } = await supabase
         .from("order_items")
@@ -257,14 +270,37 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          <Button
-            disabled
-            title="Calling coming soon"
-            className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
-          >
-            <Phone className="size-3.5" />
-            Call Cook
-          </Button>
+          {cookPhoneLoading ? (
+            <Button
+              disabled
+              className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
+            >
+              <Phone className="size-3.5" />
+              Call Cook
+            </Button>
+          ) : cookPhone ? (
+            <a
+              href={`tel:${cookPhone}`}
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 shrink-0 shadow-none"
+              )}
+            >
+              <Phone className="size-3.5" />
+              <div className="flex flex-col leading-none">
+                <span>Call Cook</span>
+                <span className="text-[10px]">{cookPhone}</span>
+              </div>
+            </a>
+          ) : (
+            <Button
+              disabled
+              className="bg-slate-100 text-slate-400 hover:bg-slate-100 rounded-xl font-bold text-xs tracking-wider uppercase h-9 flex items-center gap-1.5 cursor-not-allowed shrink-0 shadow-none"
+            >
+              <Phone className="size-3.5" />
+              Phone unavailable
+            </Button>
+          )}
         </Card>
 
         {/* Itemized Bill */}
