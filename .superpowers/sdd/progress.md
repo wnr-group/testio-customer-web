@@ -7,15 +7,15 @@
 
 ## Task Status
 
-- [x] Task 1: Gate map picker behind an explicit Add New Address step — APPROVED
-- [x] Task 2: Manual Regression & QA Verification — AUTOMATED CHECKS PASSED (Steps 2-11 require manual browser QA by user)
-- [x] Task 3: Production Readiness Validation — Git validation PASS; Steps 2-13, 15-16 require manual browser QA by user
+- [x] Task 1: Gate map picker behind an explicit Add New Address step — READY FOR QA
+- [x] Task 2: Manual Regression & QA Verification — AUTOMATED CHECKS COMPLETED (Steps 2-11 require manual browser QA by user)
+- [x] Task 3: Production Readiness Validation — GIT VALIDATION COMPLETED (Steps 2-13, 15-16 require manual browser QA by user)
 
 ## Completed Tasks
 
-**Task 1: APPROVED** (commits 52ae41d + 98e47c1 + a6e9675 restore, review clean)
-**Task 2: AUTOMATED PASS** (tsc: 0 errors, lint: 0 errors / 1 pre-existing warning, build: 19/19 routes)
-**Task 3: GIT VALIDATION PASS** (Task 3 Step 14 verified; manual browser/DevTools steps NOT VERIFIED — require human QA)
+**Task 1: READY FOR QA** (commits 52ae41d + 98e47c1 + a6e9675 restore, review clean)
+**Task 2: AUTOMATED CHECKS COMPLETED** (tsc: 0 errors, lint: 0 errors / 1 pre-existing warning, build: 19/19 routes; manual browser steps NOT VERIFIED)
+**Task 3: GIT VALIDATION COMPLETED** (Task 3 Step 14 verified; manual browser/DevTools steps NOT VERIFIED — require human QA)
 
 **Final review fixes applied:**
 - c6df72b: removed stray empty files `()` and `{})` from git index

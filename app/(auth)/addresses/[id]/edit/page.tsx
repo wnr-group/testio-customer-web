@@ -68,24 +68,14 @@ export default function EditAddressPage() {
         return;
       }
 
-      if (picked.isDefault) {
-        const { error: clearError } = await supabase
-          .from("customer_addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id);
-        if (clearError) throw clearError;
-      }
-
-      const { error } = await supabase
-        .from("customer_addresses")
-        .update({
-          label: picked.label,
-          address_line: picked.address,
-          lat: picked.lat,
-          lng: picked.lng,
-          is_default: picked.isDefault,
-        })
-        .eq("id", id);
+      const { error } = await supabase.rpc("set_customer_address", {
+        p_address_id: id,
+        p_label: picked.label,
+        p_address_line: picked.address,
+        p_lat: picked.lat,
+        p_lng: picked.lng,
+        p_is_default: picked.isDefault,
+      });
       if (error) throw error;
 
       toast.success("Address updated");

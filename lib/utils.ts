@@ -39,13 +39,20 @@ export function safeInternalPath(path: string | null | undefined): string | null
   return path
 }
 
-export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+export async function reverseGeocode(lat: number, lng: number, forStorage: boolean = false): Promise<string | null> {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (mapboxToken) {
+  const isPermanent = process.env.NEXT_PUBLIC_MAPBOX_PERMANENT === "true";
+
+  if (mapboxToken && (!forStorage || isPermanent)) {
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${mapboxToken}`
-      );
+      const url = new URL("https://api.mapbox.com/search/geocode/v6/reverse");
+      url.searchParams.set("longitude", lng.toString());
+      url.searchParams.set("latitude", lat.toString());
+      url.searchParams.set("access_token", mapboxToken);
+      if (isPermanent) {
+        url.searchParams.set("permanent", "true");
+      }
+      const res = await fetch(url.toString());
       if (res.ok) {
         const data = await res.json();
         if (data.features && data.features.length > 0) {

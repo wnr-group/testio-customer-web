@@ -94,21 +94,13 @@ export default function NewAddressPage() {
 
       const makeDefault = picked.isDefault || (count ?? 0) === 0;
 
-      if (makeDefault) {
-        const { error: updateError } = await supabase
-          .from("customer_addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id);
-        if (updateError) throw updateError;
-      }
-
-      const { error } = await supabase.from("customer_addresses").insert({
-        user_id: user.id,
-        label: picked.label,
-        address_line: picked.address,
-        lat: picked.lat,
-        lng: picked.lng,
-        is_default: makeDefault,
+      const { error } = await supabase.rpc("set_customer_address", {
+        p_address_id: null,
+        p_label: picked.label,
+        p_address_line: picked.address,
+        p_lat: picked.lat,
+        p_lng: picked.lng,
+        p_is_default: makeDefault,
       });
       if (error) throw error;
 

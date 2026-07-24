@@ -21,18 +21,20 @@ const STORAGE_KEY = 'resolved_location'
 // Persisted across mounts (but not across browser sessions) so that
 // navigating away from /home and back doesn't re-run the resolution
 // chain and silently overwrite a location the user already picked.
-function loadStored(): ResolvedLocation | null {
+function loadStored(userId?: string): ResolvedLocation | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (
-      typeof parsed?.lat === 'number' && 
-      typeof parsed?.lng === 'number' && 
-      typeof parsed?.label === 'string' &&
-      typeof parsed?.source === 'string'
+      parsed &&
+      typeof parsed.location?.lat === 'number' && 
+      typeof parsed.location?.lng === 'number' && 
+      typeof parsed.location?.label === 'string' &&
+      ['device', 'saved', 'picked'].includes(parsed.location?.source) &&
+      parsed.userId === userId
     ) {
-      return parsed as ResolvedLocation
+      return parsed.location as ResolvedLocation
     }
   } catch {
     // corrupted / private mode — ignore
@@ -40,9 +42,9 @@ function loadStored(): ResolvedLocation | null {
   return null
 }
 
-function storeLocation(loc: ResolvedLocation) {
+function storeLocation(loc: ResolvedLocation, userId?: string) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(loc))
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ location: loc, userId }))
   } catch {
     // private mode — session-only is fine
   }
@@ -85,16 +87,18 @@ export function useResolvedLocation() {
     let cancelled = false
 
     void (async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
       // 0. Already resolved/picked earlier this session — skip re-resolving
       // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
-      const stored = loadStored()
+      const stored = loadStored(user?.id)
       if (stored) {
+        if (cancelled) return
         setLocationState(stored)
         setStatus('ready')
         return
       }
-
-      const supabase = createClient()
 
       // 1. Device geolocation
       const geo = await tryGeolocation()
@@ -105,20 +109,18 @@ export function useResolvedLocation() {
         const resolved: ResolvedLocation = { lat: geo.lat, lng: geo.lng, label, source: 'device' }
         setLocationState(resolved)
         setStatus('ready')
-        storeLocation(resolved)
+        storeLocation(resolved, user?.id)
         return
       }
 
       // 2. Default saved address
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
         if (user) {
           const { data } = await supabase
             .from('customer_addresses')
             .select('label, address_line, lat, lng, is_default, created_at')
             .eq('user_id', user.id)
+            .eq('is_deleted', false)
             .order('is_default', { ascending: false })
             .order('created_at', { ascending: false })
             .limit(1)
@@ -132,7 +134,7 @@ export function useResolvedLocation() {
             }
             setLocationState(resolved)
             setStatus('ready')
-            storeLocation(resolved)
+            storeLocation(resolved, user?.id)
             return
           }
         }
@@ -154,7 +156,10 @@ export function useResolvedLocation() {
   const setLocation = useCallback((loc: ResolvedLocation) => {
     setLocationState(loc)
     setStatus('ready')
-    storeLocation(loc)
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      storeLocation(loc, user?.id)
+    })
   }, [])
 
   return { location, status, setLocation }

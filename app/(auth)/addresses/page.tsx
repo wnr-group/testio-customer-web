@@ -177,7 +177,7 @@ export default function AddressesPage() {
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
             <h3 className="font-bold text-slate-900 text-base">Delete this address?</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              &ldquo;{deleteTarget.label}&rdquo; — {deleteTarget.address_line} will be removed permanently.
+              &ldquo;{deleteTarget.label}&rdquo; — {deleteTarget.address_line} will be removed from your saved addresses.
             </p>
             <div className="flex gap-3 mt-2">
               <Button

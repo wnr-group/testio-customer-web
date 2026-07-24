@@ -163,6 +163,7 @@ export function useResolvedLocation() {
             .from('customer_addresses')
             .select('label, address_line, lat, lng, is_default, created_at')
             .eq('user_id', user.id)
+            .eq('is_deleted', false)
             .order('is_default', { ascending: false })
             .order('created_at', { ascending: false })
             .limit(1)

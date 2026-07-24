@@ -24,7 +24,7 @@
 
 **Current flow (Order Detail → Call Cook):**
 
-```
+```text
 OrderDetailPage (app/(auth)/order/[id]/page.tsx)
   → load() effect: supabase.from("orders").select(...).eq("id", id).single()
   → Cook Info Card renders kitchen name/image from the same query
@@ -43,7 +43,7 @@ There is **no masked-number/Exotel logic in this repository at all**. Confirmed 
 
 **Where the cook's real phone actually lives:** `cook_profiles` has no phone field. The FK chain is:
 
-```
+```text
 orders.cook_id → cook_profiles.id
 cook_profiles.user_id → users.id
 users.phone   ← the actual number

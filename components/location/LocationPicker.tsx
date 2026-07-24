@@ -104,7 +104,7 @@ export default function LocationPicker({
     const updateFromLngLat = async (lng: number, lat: number) => {
       setCoords({ lat, lng })
       setGeocoding(true)
-      const a = await reverseGeocode(lat, lng)
+      const a = await reverseGeocode(lat, lng, true)
       setAddress(a || `${lat.toFixed(5)}, ${lng.toFixed(5)}`)
       setGeocoding(false)
     }

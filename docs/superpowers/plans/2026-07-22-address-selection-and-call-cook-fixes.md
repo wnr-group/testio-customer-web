@@ -121,7 +121,7 @@ grant execute on function public.get_cook_phone(uuid) to anon, authenticated;
 
 Expected: `CREATE FUNCTION` / `REVOKE` / `GRANT` all succeed with no errors.
 
-Note: `grant ... to anon` (not just `authenticated`) is intentional and matches the page's existing public-visibility model — `/cook/[id]` renders kitchen name, images, and address to unauthenticated visitors today with no login gate, so the phone follows the same access level. If a login gate is later added to `/cook/[id]`, this grant should be revisited then — but that is a separate, unrequested change and out of scope here.
+Note: `grant ... to anon` (not just `authenticated`) is intentional and matches the page's existing public-visibility model — `/cook/[id]` renders kitchen name, images, and address to unauthenticated visitors today with no login gate, so the phone follows the same access level. To prevent bulk scraping of phone numbers, this endpoint relies on Supabase's global edge network rate limiting and Web Application Firewall (WAF) rules which throttle anomalous anonymous request volumes. If a login gate is later added to `/cook/[id]`, this grant should be revisited then — but that is a separate, unrequested change and out of scope here.
 
 - [ ] **Step 2: Verify the function is registered with the correct security mode**
 

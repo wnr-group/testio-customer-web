@@ -36,25 +36,25 @@ All three states use consistent styling with existing components (`buttonVariant
 ## Verification Results
 
 ### TypeScript Check
-```
+```bash
 npx tsc --noEmit
 ```
 ✓ **PASSED** — Zero type errors
 
 ### ESLint
-```
+```bash
 npm run lint
 ```
 ⚠️ **Result:** 2 pre-existing errors in unrelated files (`LocationPicker.tsx`, `OrderTrackingMap.tsx`), 3 pre-existing warnings in cook reviews page. No new errors or warnings introduced by this change.
 
 ### Build
-```
+```bash
 npm run build
 ```
 ✓ **PASSED** — Next.js 16 build succeeded in 11.4s. All 19 static pages generated successfully.
 
 ### Changes Made
-```
+```text
 1 file changed, 45 insertions(+), 9 deletions(-)
 ```
 - Replaced 9-line disabled button block with 31-line conditional render block
@@ -111,7 +111,7 @@ The following test cases can be verified in a running instance:
 
 ## Commit Details
 
-```
+```text
 Commit: 9571554
 Author: Claude Haiku 4.5
 Message: feat: show real cook phone number on Call Cook button

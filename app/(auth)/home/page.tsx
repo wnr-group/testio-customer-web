@@ -164,18 +164,13 @@ function HomeContent() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const { count } = await supabase
-          .from("customer_addresses")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("is_deleted", false);
-        const { error } = await supabase.from("customer_addresses").insert({
-          user_id: user.id,
-          label: picked.label,
-          address_line: picked.address,
-          lat: picked.lat,
-          lng: picked.lng,
-          is_default: (count ?? 0) === 0,
+        const { error } = await supabase.rpc("set_customer_address", {
+          p_address_id: null,
+          p_label: picked.label,
+          p_address_line: picked.address,
+          p_lat: picked.lat,
+          p_lng: picked.lng,
+          p_is_default: picked.isDefault,
         });
         if (error) throw error;
       }

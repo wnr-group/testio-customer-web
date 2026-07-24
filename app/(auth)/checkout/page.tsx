@@ -169,6 +169,7 @@ export default function CheckoutPage() {
           pickup_time: deliveryType === "pickup" ? pickupTime : null,
           delivery_type: deliveryType,
           address_id: deliveryType === "delivery" ? deliveryAddressId : undefined,
+          payment_method: paymentMethod,
         },
       });
 
@@ -177,26 +178,27 @@ export default function CheckoutPage() {
       const { order, razorpay_order_id: razorpayOrderId } = orderData;
       pendingOrderId = order.id;
 
-      // 2. Complete payment. Web Razorpay Checkout isn't integrated yet, so
-      // mirror the DEV_MODE mock flow the mobile app uses (this environment
-      // runs with DEV_MODE=true and a placeholder Razorpay key) rather than
-      // silently marking a real transaction as paid.
-      const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      const isMockPayment = !razorpayKeyId || razorpayKeyId.includes("XXXXX");
+      if (paymentMethod !== "cash") {
+        // 2. Complete payment. Web Razorpay Checkout isn't integrated yet, so
+        // mirror the DEV_MODE mock flow the mobile app uses (this environment
+        // runs with DEV_MODE=true and a placeholder Razorpay key) rather than
+        // silently marking a real transaction as paid.
+        const isMockPayment = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
-      if (!isMockPayment) {
-        throw new Error("Online payment is not yet configured for web checkout.");
+        if (!isMockPayment) {
+          throw new Error("Online payment is not yet configured for web checkout.");
+        }
+
+        const { error: verifyError } = await supabase.functions.invoke("verify-payment", {
+          body: {
+            razorpay_order_id: razorpayOrderId,
+            razorpay_payment_id: `mock_payment_${order.id}`,
+            razorpay_signature: "mock_signature",
+          },
+        });
+
+        if (verifyError) throw new Error(await getEdgeFunctionErrorMessage(verifyError, "Failed to verify payment"));
       }
-
-      const { error: verifyError } = await supabase.functions.invoke("verify-payment", {
-        body: {
-          razorpay_order_id: razorpayOrderId,
-          razorpay_payment_id: `mock_payment_${order.id}`,
-          razorpay_signature: "mock_signature",
-        },
-      });
-
-      if (verifyError) throw new Error(await getEdgeFunctionErrorMessage(verifyError, "Failed to verify payment"));
 
       toast.success("Order placed successfully!");
 
@@ -209,9 +211,10 @@ export default function CheckoutPage() {
       // Payment didn't complete — remove the pending order rather than leaving
       // an unpayable order stuck in the cook's queue forever.
       if (pendingOrderId) {
-        await supabase.from("orders").delete().eq("id", pendingOrderId).then(({ error }) => {
-          if (error) console.error(error);
-        });
+        const { error: cleanupError } = await supabase.from("orders").delete().eq("id", pendingOrderId);
+        if (cleanupError) {
+          console.error("Failed to cleanup pending order after payment failure:", cleanupError, { pendingOrderId });
+        }
       }
     } finally {
       setSubmittingOrder(false);

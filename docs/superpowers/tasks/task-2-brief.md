@@ -47,15 +47,19 @@
    ```tsx
    setOrder(orderData as unknown as OrderRow);
 
-   const { data: phoneData, error: phoneError } = await supabase.rpc(
+   supabase.rpc(
      "get_order_cook_phone",
      { p_order_id: id }
-   );
-   if (phoneError) {
-     console.error("Fetch cook phone error:", phoneError);
-   }
-   setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
-   setCookPhoneLoading(false);
+   ).then(({ data: phoneData, error: phoneError }) => {
+     if (phoneError) {
+       console.error("Fetch cook phone error:", phoneError);
+     }
+     setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+   }).catch((err) => {
+     console.error("Unhandled phone fetch error:", err);
+   }).finally(() => {
+     setCookPhoneLoading(false);
+   });
    ```
 
 4. **Replace the Call Cook button** (lines 260-267) with the conditional three-state render block shown in the plan.
