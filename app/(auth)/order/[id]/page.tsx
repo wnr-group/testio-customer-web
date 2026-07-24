@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useRealtimeOrder, type OrderStatus } from "@/hooks/useRealtimeOrder";
+import type { DeliveryAssignmentRow } from "@/hooks/useRealtimeDeliveryAssignment";
 import StatusStepper from "@/components/order/StatusStepper";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ export default function OrderDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [cookPhone, setCookPhone] = useState<string | null>(null);
   const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
+  const [assignment, setAssignment] = useState<DeliveryAssignmentRow | null>(null);
 
   const { status: liveStatus } = useRealtimeOrder(id);
 
@@ -132,6 +134,17 @@ export default function OrderDetailPage() {
         .select("id, quantity, unit_price, total_price, dishes ( name, image_url )")
         .eq("order_id", id);
       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
+
+      const { data: assignmentData, error: assignmentError } = await supabase
+        .from("delivery_assignments")
+        .select("status, otp_code")
+        .eq("order_id", id)
+        .maybeSingle();
+      if (assignmentError) {
+        console.error("Fetch delivery assignment error:", assignmentError);
+      } else if (isMounted) {
+        setAssignment(assignmentData as DeliveryAssignmentRow | null);
+      }
 
       if (orderData.status === "completed") {
         const { data: reviewData } = await supabase
