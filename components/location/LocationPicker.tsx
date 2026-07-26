@@ -87,8 +87,8 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
   // Debounced place search.
   useEffect(() => {
     if (!query.trim()) {
-      setResults([])
-      return
+      const t = setTimeout(() => setResults([]), 0)
+      return () => clearTimeout(t)
     }
     const t = setTimeout(async () => {
       setResults(await searchPlaces(query))

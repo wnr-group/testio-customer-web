@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ShoppingCart, User, Menu } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
@@ -16,18 +16,18 @@ import {
 } from '@/components/ui/sheet'
 import { LogOut } from 'lucide-react' // Import LogOut icon
 
-
+const emptySubscribe = () => () => {};
 
 export function Navbar() {
   // Subscribe to `items` so React re-renders reliably when items change
   const count = useCartStore((s) =>
     s.items.reduce((sum, item) => sum + item.qty, 0),
   );
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[--color-border-color] bg-white/95 backdrop-blur-sm">
