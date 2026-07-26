@@ -44,7 +44,7 @@ function HomeContent() {
   const supabase = createClient();
   const cartItemCount = useCartStore((s) => s.itemCount());
 
-  const viewMode = searchParams.get("view") || "list";
+  const viewMode = searchParams.get("view") || "map";
   const { location, status, setLocation } = useResolvedLocation();
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -166,10 +166,14 @@ function HomeContent() {
   };
 
   const cookMarkers = cooks
-    .filter((c) => typeof c.longitude === "number" && typeof c.latitude === "number")
+    .filter((c) => {
+      const lat = c.lat ?? c.latitude;
+      const lng = c.lng ?? c.longitude;
+      return typeof lat === "number" && typeof lng === "number";
+    })
     .map((c) => ({
-      lng: c.longitude,
-      lat: c.latitude,
+      lng: c.lng ?? c.longitude,
+      lat: c.lat ?? c.latitude,
       cookId: c.id,
       kitchenName: c.kitchen_name,
       rating: c.avg_rating != null ? Number(c.avg_rating) : null,

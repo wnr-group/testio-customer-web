@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
+import { CartConflictDialog } from "./ui/CartConflictDialog";
 
 export interface Dish {
   id: string;
@@ -36,7 +37,9 @@ export function DishCard({ dish }: DishCardProps) {
   const currentCookName = useCartStore((s) => s.cookName);
   const [mounted, setMounted] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-
+  const [conflictOpen, setConflictOpen] = useState(false);
+  
+  
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
@@ -52,9 +55,9 @@ export function DishCard({ dish }: DishCardProps) {
 
   const handleAdd = async () => {
     const kitchenName = dish.cook_profiles?.kitchen_name || "Home Cook";
-
     // Logged-out visitors: remember the dish, then prompt to sign in.
     // getSession reads local storage — no network round-trip per click.
+    
     const supabase = createClient();
     const {
       data: { session },
@@ -85,22 +88,25 @@ export function DishCard({ dish }: DishCardProps) {
 
     // Ask user for confirmation if they are ordering from a different kitchen
     if (currentCookId && currentCookId !== dish.cook_id) {
-      const confirmClear = window.confirm(
-        `Your cart contains items from "${currentCookName}". Adding this item will clear your current cart. Do you want to continue?`
-      );
-      if (!confirmClear) return;
+      setConflictOpen(true);
+      return;
     }
 
-    addItem(dish.cook_id, kitchenName, {
-      dishId: dish.id,
-      name: dish.name,
-      price: dish.price,
-      qty: 1,
-      imageUrl: dish.image_url || undefined,
-      max_quantity: dish.max_quantity,
-    });
-    toast.success(`Added ${dish.name} to cart`);
+        confirmAndAddItem(kitchenName);
   };
+
+
+const confirmAndAddItem = (kitchenName: string) => {
+  addItem(dish.cook_id, kitchenName, {
+    dishId: dish.id,
+    name: dish.name,
+    price: dish.price,
+    qty: 1,
+    imageUrl: dish.image_url || undefined,
+    max_quantity: dish.max_quantity,
+  });
+  toast.success(`Added ${dish.name} to cart`);
+};
 
   const handleIncrement = () => {
     if (qty >= dish.max_quantity) {
@@ -116,8 +122,8 @@ export function DishCard({ dish }: DishCardProps) {
 
   return (
     <Card className="w-full shadow-sm bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col group h-full pt-0 pb-0">
-      {/* Aspect Ratio Image with Overlay badges - attached to top of card */}
-      <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden shrink-0">
+      {/* aspect-square (1:1) Image with Overlay badges - attached to top of card */}
+      <div className="relative w-full aspect-square bg-slate-100 overflow-hidden shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={dish.image_url || "/placeholder-dish.jpg"}
@@ -128,7 +134,6 @@ export function DishCard({ dish }: DishCardProps) {
               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
           }}
         />
-
         {/* Capsule Veg / Non-Veg Indicator Badge */}
         {dish.dietary_status && (
           <div className="absolute top-3 left-3 bg-white/95 px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1.5 border border-slate-100">
@@ -147,7 +152,6 @@ export function DishCard({ dish }: DishCardProps) {
           </div>
         )}
       </div>
-
       {/* Card Details */}
       <div className="p-4 flex flex-col flex-1 gap-2.5 justify-between">
         <div className="flex flex-col gap-1">
@@ -159,7 +163,11 @@ export function DishCard({ dish }: DishCardProps) {
           {/* Kitchen / Cook Source */}
           <p className="text-xs text-slate-400 font-medium line-clamp-1">
             {dish.cook_profiles?.kitchen_name || "Home Cook"}
-            <span> • Serves {/(thali|platter|feast|set)/i.test(dish.name) ? "1-2" : "1"}</span>
+            <span>
+              {" "}
+              • Serves{" "}
+              {/(thali|platter|feast|set)/i.test(dish.name) ? "1-2" : "1"}
+            </span>
           </p>
 
           {/* Description */}
@@ -189,7 +197,9 @@ export function DishCard({ dish }: DishCardProps) {
               >
                 <Minus className="size-3 text-slate-600" />
               </Button>
-              <span className="px-2 font-bold text-slate-800 text-xs">{qty}</span>
+              <span className="px-2 font-bold text-slate-800 text-xs">
+                {qty}
+              </span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -213,12 +223,23 @@ export function DishCard({ dish }: DishCardProps) {
           )}
         </div>
       </div>
-
       <LoginPromptSheet
         dish={dish}
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
+
+      <CartConflictDialog
+        open={conflictOpen}
+        onClose={() => setConflictOpen(false)}
+        onConfirm={() => {
+          setConflictOpen(false);
+          confirmAndAddItem(dish.cook_profiles?.kitchen_name || "Home Cook");
+        }}
+        currentCookName={currentCookName || "another kitchen"}
+        newCookName={dish.cook_profiles?.kitchen_name || "Home Cook"}
+      />
+
     </Card>
   );
 }

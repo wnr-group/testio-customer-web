@@ -25,6 +25,8 @@ const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false }
 type NearbyCook = CookProfile & {
   latitude?: number
   longitude?: number
+  lat?: number
+  lng?: number
   today_dish_count?: number
 }
 
@@ -84,10 +86,14 @@ export default function ExplorePage() {
   }, [location])
 
   const cookMarkers = cooks
-    .filter((c) => typeof c.longitude === 'number' && typeof c.latitude === 'number')
+    .filter((c) => {
+      const lat = c.lat ?? c.latitude;
+      const lng = c.lng ?? c.longitude;
+      return typeof lat === 'number' && typeof lng === 'number';
+    })
     .map((c) => ({
-      lng: c.longitude!,
-      lat: c.latitude!,
+      lng: (c.lng ?? c.longitude)!,
+      lat: (c.lat ?? c.latitude)!,
       cookId: c.id,
       kitchenName: c.kitchen_name,
       rating: c.avg_rating != null ? Number(c.avg_rating) : null,

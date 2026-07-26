@@ -80,8 +80,7 @@ export default function CookMenuPage() {
     (d) => !d.available_date || d.available_date === selectedDateKey
   );
 
-  const showCartBar = mounted && cartCookId === cookId && itemCount() > 0;
-
+const showCartBar = mounted && itemCount() > 0;
   if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8">
@@ -99,7 +98,9 @@ export default function CookMenuPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8 ${showCartBar ? "pb-28" : ""}`}>
+    <div
+      className={`min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8 ${showCartBar ? "pb-28" : ""}`}
+    >
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/cook/${cookId}`}
@@ -112,7 +113,9 @@ export default function CookMenuPage() {
           <Utensils className="size-3.5" />
           <span>{kitchenName}</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-[#091A36] tracking-tight mb-6">Menu</h1>
+        <h1 className="text-3xl font-extrabold text-[#091A36] tracking-tight mb-6">
+          Menu
+        </h1>
 
         <div
           role="radiogroup"
@@ -147,9 +150,12 @@ export default function CookMenuPage() {
             <div className="p-4 bg-red-50 rounded-full text-[#D61A22]">
               <ShoppingBag className="size-8" />
             </div>
-            <h2 className="text-lg font-bold text-[#091A36]">No dishes available</h2>
+            <h2 className="text-lg font-bold text-[#091A36]">
+              No dishes available
+            </h2>
             <p className="text-slate-400 text-xs font-semibold leading-relaxed">
-              {kitchenName} hasn&apos;t added any dishes for {selectedDay}. Please check back later.
+              {kitchenName} hasn&apos;t added any dishes for {selectedDay}.
+              Please check back later.
             </p>
           </div>
         ) : (
@@ -165,15 +171,9 @@ export default function CookMenuPage() {
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-100 bg-white/95 backdrop-blur px-4 py-3 shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.08)]">
           <div className="mx-auto max-w-6xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-slate-800">
-              <div className="p-2 bg-red-50 rounded-full text-[#D61A22]">
-                <ShoppingBag className="size-4" />
-              </div>
-              <div className="leading-tight">
-                <p className="text-xs font-bold text-slate-800">
-                  {itemCount()} item{itemCount() > 1 ? "s" : ""} in cart
-                </p>
-                <p className="text-[11px] font-semibold text-slate-400">₹{total().toFixed(2)}</p>
-              </div>
+              <span className="text-xs font-bold text-[#091A36] tracking-wide">
+                 {itemCount()} {itemCount() === 1 ? "item" : "items"} · ₹{total().toFixed(2)}
+              </span>
             </div>
             <Button
               onClick={() => router.push("/cart")}

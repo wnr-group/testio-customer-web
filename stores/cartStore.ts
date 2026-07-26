@@ -30,35 +30,56 @@ export const useCartStore = create<CartState>()(
       items: [],
 
       addItem: (cookId, cookName, item) => {
-        const state = get()
-        const normalizedItem = { ...item, qty: Math.min(item.qty, item.max_quantity) }
+        const state = get();
+        const normalizedItem = {
+          ...item,
+          qty: Math.min(item.qty, item.max_quantity),
+        };
 
         // If adding from a different cook, replace cart
         if (state.cookId && state.cookId !== cookId) {
-          set({ cookId, cookName, items: [normalizedItem] })
-          return
+          set({ cookId, cookName, items: [normalizedItem] });
+          return;
         }
-        const existing = state.items.find((i) => i.dishId === item.dishId)
+        const existing = state.items.find((i) => i.dishId === item.dishId);
         if (existing) {
           set({
             items: state.items.map((i) =>
-              i.dishId === item.dishId ? { ...i, qty: Math.min(i.qty + item.qty, i.max_quantity) } : i
+              i.dishId === item.dishId
+                ? { ...i, qty: Math.min(i.qty + item.qty, i.max_quantity) }
+                : i,
             ),
-          })
+          });
         } else {
-          set({ cookId, cookName, items: [...state.items, normalizedItem] })
+          set({ cookId, cookName, items: [...state.items, normalizedItem] });
         }
       },
 
       updateQty: (dishId, qty) =>
-        set((s) => ({
-          items: qty <= 0
-            ? s.items.filter((i) => i.dishId !== dishId)
-            : s.items.map((i) => (i.dishId === dishId ? { ...i, qty: Math.min(qty, i.max_quantity) } : i)),
-        })),
+        set((s) => {
+          const newItems =
+            qty <= 0
+              ? s.items.filter((i) => i.dishId !== dishId)
+              : s.items.map((i) =>
+                  i.dishId === dishId
+                    ? { ...i, qty: Math.min(qty, i.max_quantity) }
+                    : i,
+                );
+
+          if (newItems.length === 0) {
+            return { items: [], cookId: null, cookName: null };
+          }
+          return { items: newItems };
+        }),
 
       removeItem: (dishId) =>
-        set((s) => ({ items: s.items.filter((i) => i.dishId !== dishId) })),
+        set((s) => {
+          const newItems = s.items.filter((i) => i.dishId !== dishId);
+          if (newItems.length === 0) {
+            return { items: [], cookId: null, cookName: null };
+          }
+          return { items: newItems };
+        }),
 
       clear: () => set({ cookId: null, cookName: null, items: [] }),
 
@@ -67,16 +88,27 @@ export const useCartStore = create<CartState>()(
       itemCount: () => get().items.reduce((sum, i) => sum + i.qty, 0),
     }),
     {
-      name: 'testio-cart',
+      name: "testio-cart",
       version: 1,
       migrate: (persistedState: any, version: number) => {
-        if (version < 1 && persistedState && typeof persistedState === 'object') {
+        if (
+          version < 1 &&
+          persistedState &&
+          typeof persistedState === "object"
+        ) {
           const state = persistedState as any;
           if (Array.isArray(state.items)) {
             state.items = state.items.map((item: any) => {
-              const qtyNum = typeof item.qty === 'number' ? item.qty : Number(item.qty);
-              const priceNum = typeof item.price === 'number' ? item.price : Number(item.price);
-              const maxQtyNum = typeof item.max_quantity === 'number' ? item.max_quantity : Number(item.max_quantity);
+              const qtyNum =
+                typeof item.qty === "number" ? item.qty : Number(item.qty);
+              const priceNum =
+                typeof item.price === "number"
+                  ? item.price
+                  : Number(item.price);
+              const maxQtyNum =
+                typeof item.max_quantity === "number"
+                  ? item.max_quantity
+                  : Number(item.max_quantity);
 
               return {
                 ...item,
@@ -85,11 +117,20 @@ export const useCartStore = create<CartState>()(
                 max_quantity: !isNaN(maxQtyNum) ? maxQtyNum : 10,
               };
             });
+
+            if (state.items.length === 0) {
+              state.cookId = null;
+              state.cookName = null;
+            }
+          } else {
+            state.items = [];
+            state.cookId = null;
+            state.cookName = null;
           }
           return state;
         }
         return persistedState;
-      }
-    }
-  )
-)
+      },
+    },
+  ),
+);
