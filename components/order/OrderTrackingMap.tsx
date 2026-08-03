@@ -281,18 +281,12 @@ export default function OrderTrackingMap({ orderId, className }: Props) {
 
     const leg = currentLeg(data)
     if (!leg) {
-      lastRouteRef.current = null;
+      lastRouteRef.current = null
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEtaMin(null);
-      const source = map.getSource(ROUTE_SOURCE_ID) as
-        | mapboxgl.GeoJSONSource
-        | undefined;
-      source?.setData({
-        type: "Feature",
-        properties: {},
-        geometry: { type: "LineString", coordinates: [] },
-      });
-      return;
+      setEtaMin(null)
+      const source = map.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource | undefined
+      source?.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } })
+      return
     }
 
     const last = lastRouteRef.current

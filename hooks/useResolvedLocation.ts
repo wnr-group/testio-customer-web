@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { reverseGeocode } from '@/lib/utils'
 
@@ -15,6 +15,40 @@ export type ResolvedLocation = {
 // ready      → we have a location to show cooks for
 // needs-picker → no device location and no saved address; the user must pick one
 export type ResolveStatus = 'resolving' | 'ready' | 'needs-picker'
+
+const STORAGE_KEY = 'resolved_location'
+
+// Persisted across mounts (but not across browser sessions) so that
+// navigating away from /home and back doesn't re-run the resolution
+// chain and silently overwrite a location the user already picked.
+function loadStored(userId?: string): ResolvedLocation | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (
+      parsed &&
+      typeof parsed.location?.lat === 'number' && 
+      typeof parsed.location?.lng === 'number' && 
+      typeof parsed.location?.label === 'string' &&
+      ['device', 'saved', 'picked'].includes(parsed.location?.source) &&
+      parsed.userId === userId
+    ) {
+      return parsed.location as ResolvedLocation
+    }
+  } catch {
+    // corrupted / private mode — ignore
+  }
+  return null
+}
+
+function storeLocation(loc: ResolvedLocation, userId?: string) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ location: loc, userId }))
+  } catch {
+    // private mode — session-only is fine
+  }
+}
 
 async function tryGeolocation(): Promise<{ lat: number; lng: number } | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null
@@ -38,10 +72,11 @@ async function tryGeolocation(): Promise<{ lat: number; lng: number } | null> {
 }
 
 /**
- * Resolves the user's delivery location on mount, in priority order:
- *   1. device geolocation (if permitted)
- *   2. their default saved address
- *   3. otherwise → status 'needs-picker' so the UI can ask them to choose a spot
+ * Resolves the user's delivery location, in priority order:
+ *   1. a location already persisted this session (a prior device/saved/picked resolution)
+ *   2. device geolocation (if permitted)
+ *   3. their default saved address
+ *   4. otherwise → status 'needs-picker' so the UI can ask them to choose a spot
  * Never falls back to a hardcoded location.
  */
 export function useResolvedLocation() {
@@ -53,6 +88,27 @@ export function useResolvedLocation() {
 
     void (async () => {
       const supabase = createClient()
+      let user = null;
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        if (!error) {
+          user = data.user
+        }
+      } catch (err) {
+        console.error("Failed to fetch user", err);
+      }
+
+      // 0. Already resolved/picked earlier this session — skip re-resolving
+      // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
+      const stored = loadStored(user?.id)
+      if (stored) {
+        if (cancelled) return
+        setLocationState(stored)
+        setStatus('ready')
+        return
+      }
+
+      if (cancelled) return
 
       // 1. Device geolocation
       const geo = await tryGeolocation()
@@ -60,33 +116,35 @@ export function useResolvedLocation() {
       if (geo) {
         const label = (await reverseGeocode(geo.lat, geo.lng)) || 'Current location'
         if (cancelled) return
-        setLocationState({ lat: geo.lat, lng: geo.lng, label, source: 'device' })
+        const resolved: ResolvedLocation = { lat: geo.lat, lng: geo.lng, label, source: 'device' }
+        setLocationState(resolved)
         setStatus('ready')
+        storeLocation(resolved, user?.id)
         return
       }
 
       // 2. Default saved address
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
         if (user) {
           const { data } = await supabase
             .from('customer_addresses')
             .select('label, address_line, lat, lng, is_default, created_at')
             .eq('user_id', user.id)
+            .eq('is_deleted', false)
             .order('is_default', { ascending: false })
             .order('created_at', { ascending: false })
             .limit(1)
           const a = data?.[0]
           if (!cancelled && a && a.lat != null && a.lng != null) {
-            setLocationState({
+            const resolved: ResolvedLocation = {
               lat: Number(a.lat),
               lng: Number(a.lng),
               label: a.label || a.address_line || 'Saved address',
               source: 'saved',
-            })
+            }
+            setLocationState(resolved)
             setStatus('ready')
+            storeLocation(resolved, user?.id)
             return
           }
         }
@@ -99,14 +157,25 @@ export function useResolvedLocation() {
       const defaultLat = 13.0827
       const defaultLng = 80.2707
       try {
-        const label = (await reverseGeocode(defaultLat, defaultLng)) || 'Chennai, Tamil Nadu'
+        const abortController = new AbortController()
+        const timeoutId = setTimeout(() => abortController.abort(), 8000)
+        let label = 'Chennai, Tamil Nadu'
+        try {
+          label = (await reverseGeocode(defaultLat, defaultLng, false, abortController.signal)) || label
+        } finally {
+          clearTimeout(timeoutId)
+        }
         if (cancelled) return
-        setLocationState({ lat: defaultLat, lng: defaultLng, label, source: 'picked' })
+        const resolved: ResolvedLocation = { lat: defaultLat, lng: defaultLng, label, source: 'picked' }
+        storeLocation(resolved, user?.id)
+        setLocationState(resolved)
         setStatus('ready')
       } catch (e) {
         console.error('Failed to reverse geocode default city coords', e)
         if (cancelled) return
-        setLocationState({ lat: defaultLat, lng: defaultLng, label: 'Chennai, Tamil Nadu', source: 'picked' })
+        const resolved: ResolvedLocation = { lat: defaultLat, lng: defaultLng, label: 'Chennai, Tamil Nadu', source: 'picked' }
+        storeLocation(resolved, user?.id)
+        setLocationState(resolved)
         setStatus('ready')
       }
     })()
@@ -116,10 +185,24 @@ export function useResolvedLocation() {
     }
   }, [])
 
+  const setLocationGenerationRef = useRef(0)
+
   // Called when the user picks/changes a location (e.g. from the picker).
   const setLocation = useCallback((loc: ResolvedLocation) => {
     setLocationState(loc)
     setStatus('ready')
+    const supabase = createClient()
+    const gen = ++setLocationGenerationRef.current
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (gen === setLocationGenerationRef.current) {
+        storeLocation(loc, user?.id)
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch user in setLocation", err)
+      if (gen === setLocationGenerationRef.current) {
+        storeLocation(loc, undefined)
+      }
+    })
   }, [])
 
   return { location, status, setLocation }

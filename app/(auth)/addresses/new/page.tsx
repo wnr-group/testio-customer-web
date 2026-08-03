@@ -60,6 +60,7 @@ export default function NewAddressPage() {
         .from("customer_addresses")
         .select("lat, lng")
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -84,28 +85,22 @@ export default function NewAddressPage() {
         return;
       }
 
-      const { count } = await supabase
+      const { count, error: countError } = await supabase
         .from("customer_addresses")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .eq("is_deleted", false);
+      if (countError) throw countError;
 
       const makeDefault = picked.isDefault || (count ?? 0) === 0;
 
-      if (makeDefault) {
-        const { error: updateError } = await supabase
-          .from("customer_addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id);
-        if (updateError) throw updateError;
-      }
-
-      const { error } = await supabase.from("customer_addresses").insert({
-        user_id: user.id,
-        label: picked.label,
-        address_line: picked.address,
-        lat: picked.lat,
-        lng: picked.lng,
-        is_default: makeDefault,
+      const { error } = await supabase.rpc("set_customer_address", {
+        p_address_id: null,
+        p_label: picked.label,
+        p_address_line: picked.address,
+        p_lat: picked.lat,
+        p_lng: picked.lng,
+        p_is_default: makeDefault,
       });
       if (error) throw error;
 

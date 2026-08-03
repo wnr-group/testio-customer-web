@@ -7,6 +7,9 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useRealtimeOrder, type OrderStatus } from "@/hooks/useRealtimeOrder";
+import type { DeliveryAssignmentRow } from "@/hooks/useRealtimeDeliveryAssignment";
+import { useRealtimeDeliveryAssignment } from "@/hooks/useRealtimeDeliveryAssignment";
+import DeliveryOtpCard from "@/components/order/DeliveryOtpCard";
 import StatusStepper from "@/components/order/StatusStepper";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,6 +63,19 @@ interface OrderRow {
   cook_profiles: { kitchen_name: string; profile_image_url: string | null } | null;
 }
 
+function formatPickupTime(timeStr: string | null): string {
+  if (!timeStr) return "";
+  const d = new Date(timeStr);
+  if (isNaN(d.getTime())) return timeStr;
+  return d.toLocaleString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -72,8 +88,10 @@ export default function OrderDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [cookPhone, setCookPhone] = useState<string | null>(null);
   const [cookPhoneLoading, setCookPhoneLoading] = useState(true);
+  const [assignment, setAssignment] = useState<DeliveryAssignmentRow | null>(null);
 
   const { status: liveStatus } = useRealtimeOrder(id);
+  const { assignment: liveAssignment } = useRealtimeDeliveryAssignment(id);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,17 +132,18 @@ export default function OrderDetailPage() {
       }
       setOrder(orderData as unknown as OrderRow);
 
-      const { data: phoneData, error: phoneError } = await supabase.rpc(
-        "get_order_cook_phone",
-        { p_order_id: id }
-      );
-      if (!cancelled) {
-        if (phoneError) {
-          console.error("Fetch cook phone error:", phoneError);
-        }
-        setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
-        setCookPhoneLoading(false);
-      }
+      // Runs independently of the main load flow so setLoading(false) below
+      // doesn't wait on it — the button has its own cookPhoneLoading state.
+      supabase
+        .rpc("get_order_cook_phone", { p_order_id: id })
+        .then(({ data: phoneData, error: phoneError }) => {
+          if (cancelled) return;
+          if (phoneError) {
+            console.error("Fetch cook phone error:", phoneError);
+          }
+          setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+          setCookPhoneLoading(false);
+        });
 
       const { data: itemsData } = await supabase
         .from("order_items")
@@ -132,6 +151,17 @@ export default function OrderDetailPage() {
         .eq("order_id", id);
       if (cancelled) return;
       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
+
+      const { data: assignmentData, error: assignmentError } = await supabase
+        .from("delivery_assignments")
+        .select("status, otp_code")
+        .eq("order_id", id)
+        .maybeSingle();
+      if (assignmentError) {
+        console.error("Fetch delivery assignment error:", assignmentError);
+      } else if (!cancelled) {
+        setAssignment(assignmentData as DeliveryAssignmentRow | null);
+      }
 
       if (orderData.status === "completed") {
         const { data: reviewData } = await supabase
@@ -143,14 +173,25 @@ export default function OrderDetailPage() {
         setHasReview(!!reviewData);
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
     load();
-    return () => { cancelled = true; };
-  }, [id, supabase, router]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";
+  const currentAssignment = liveAssignment ?? assignment;
+  const showDeliveryOtp =
+    order != null &&
+    order.delivery_type === "delivery" &&
+    !!currentAssignment?.otp_code &&
+    (currentAssignment.status === "assigned" || currentAssignment.status === "picked_up") &&
+    currentStatus !== "cancelled" &&
+    currentStatus !== "rejected";
   const canCancel = currentStatus === "pending" || currentStatus === "accepted";
 
   const handleCancelOrder = async () => {
@@ -262,6 +303,11 @@ export default function OrderDetailPage() {
           </Card>
         )}
 
+        {/* Delivery OTP — only while a partner is actively assigned/en route */}
+        {showDeliveryOtp && currentAssignment?.otp_code && (
+          <DeliveryOtpCard otp={currentAssignment.otp_code} />
+        )}
+
         {/* Cook Info Card */}
         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
           <div className="flex items-center gap-3.5 min-w-0">
@@ -278,7 +324,7 @@ export default function OrderDetailPage() {
               <p className="font-bold text-[#091A36] text-sm truncate">{kitchenName}</p>
               {order.delivery_type === "pickup" && order.pickup_time ? (
                 <p className="text-slate-400 text-[11px] font-semibold flex items-center gap-1 mt-0.5">
-                  <Clock className="size-3" /> Pickup: {order.pickup_time}
+                  <Clock className="size-3" /> Pickup: {formatPickupTime(order.pickup_time)}
                 </p>
               ) : (
                 <p className="text-slate-400 text-[11px] font-semibold mt-0.5 capitalize">
