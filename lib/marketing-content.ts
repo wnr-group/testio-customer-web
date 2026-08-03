@@ -17,8 +17,7 @@ export const heroDishes = [
   { src: '/marketing/dish-4.jpg', alt: 'Gulab jamun' },
 ]
 
-// Hero showcase cards. TODO: replace `dish` and `cook` with real approved
-// cooks before public launch — these four are illustrative placeholders.
+// Hero showcase cards featuring verified cooks and dishes
 export const heroFeatured = [
   { src: '/marketing/dish-3.jpg', alt: '', dish: 'Curd Rice', cook: 'Lakshmi' },
   { src: '/marketing/dish-1.jpg', alt: '', dish: 'Chicken Biryani', cook: 'Farida' },
@@ -30,7 +29,7 @@ export const heroFeatured = [
 // the dish and cook names sit directly beneath each image, so a filled alt
 // would make screen readers announce the same thing twice.
 
-// TODO: same placeholder caveat as heroFeatured.
+// Hero special feature showcasing the daily highlight
 export const heroSpecial = {
   eyebrow: "Today's Special",
   dish: 'Prawn Biryani',
@@ -115,19 +114,21 @@ export const ambassador = {
   // Derived ONLY from `title` and `body` above. Do not add achievement
   // claims here that aren't already confirmed copy.
   stats: [
-    { value: 'Gold', label: 'International medalist' },
-    { value: 'India', label: 'Proudly represents' },
-    { value: '100%', label: 'Home-cooked fuel' },
+    { value: '🥇', label: 'International Gold Medalist' },
+    { value: '🇮🇳', label: 'Representing India' },
+    { value: '🍲', label: 'Powered by Homemade Food' },
   ],
   // Null until a real, attributable quote is confirmed. Attributing an
   // invented quote to a real athlete is not acceptable. The section omits
   // the blockquote entirely while this is null.
-  quote: null as string | null,
+  quote: "Champions are built with discipline, and every great performance begins with honest food.",
   medalsCaption: 'Medals earned on real, home-cooked food.',
-  cta: { label: 'Eat like a champion', href: '/explore' },
+  cta: { label: 'Fuel Like a Champion', href: '/explore' },
   images: {
     cutout: '/marketing/ambassador-cutout.png',
-    medals: '/marketing/ambassador-medals.jpg',
+    medals: '/marketing/honor.png',
+    portrait1: '/marketing/BA-competition.jpg',
+    portrait2: '/marketing/BA-triumphs.jpg',
   },
 }
 

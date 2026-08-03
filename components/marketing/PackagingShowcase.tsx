@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowRight,
   FlaskConical,
@@ -9,7 +10,6 @@ import {
   Sprout,
   UtensilsCrossed,
 } from 'lucide-react'
-import { EcoPackCollage } from '@/components/marketing/EcoPackCollage'
 import { packaging, type PackagingIconName } from '@/lib/marketing-content'
 
 const ICONS: Record<PackagingIconName, typeof Leaf> = {
@@ -51,7 +51,15 @@ export function PackagingShowcase() {
 
         <div className="mt-10 grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           {/* the visual is the section's hero element */}
-          <EcoPackCollage />
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] shadow-float ring-1 ring-text-primary/5 sm:rounded-[32px]">
+            <Image
+              src="/marketing/box.png"
+              alt="Testio Eco-friendly Packaging"
+              fill
+              sizes="(min-width: 1024px) 46vw, 92vw"
+              className="object-contain object-center"
+            />
+          </div>
 
           <div>
             <p className="max-w-lg text-sm leading-relaxed text-text-secondary">

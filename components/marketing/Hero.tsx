@@ -102,14 +102,14 @@ export function Hero() {
     <section
       ref={ref}
       data-hero-section
-      className="relative flex min-h-[100svh] flex-col overflow-hidden bg-cream"
+      className="relative flex min-h-[100svh] flex-col overflow-hidden bg-cream pt-24 sm:pt-28 lg:pt-32"
     >
-      <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-1.5 px-3 md:grid-cols-[minmax(0,0.75fr)_minmax(0,1.45fr)] md:gap-1.5 lg:gap-6">
+      <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-6 px-3 md:grid-cols-[48%_52%] lg:gap-12">
         {/* ---------------- left: copy, CTAs, featured cards ---------------- */}
         <div data-hero-copy className="relative z-10">
           <h1
             data-ink
-            className="text-4xl font-extrabold leading-[1] tracking-tight text-text-primary sm:text-5xl lg:text-[5.5rem]"
+            className="max-w-[12em] text-4xl font-extrabold leading-[0.95] tracking-tight text-text-primary sm:text-5xl lg:text-[clamp(56px,5vw,84px)]"
           >
             {hero.headline.map((line) => (
               <span key={line} className="block overflow-hidden">
@@ -173,19 +173,21 @@ export function Hero() {
               Featured in your area
             </p>
             {/* Snap strip on phones, 4-up grid from sm. */}
-            <ul className="-mx-4 mt-3 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0">
+            <ul className="-mx-4 mt-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0">
               {heroFeatured.map((item) => (
-                <li key={item.dish} className="w-[9rem] shrink-0 snap-start sm:w-auto">
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    width={240}
-                    height={180}
-                    sizes="(min-width: 768px) 150px, 144px"
-                    className="aspect-[4/3] w-full rounded-lg object-cover shadow-card ring-1 ring-text-primary/5"
-                  />
-                  <p className="mt-3 text-base font-bold text-text-primary line-clamp-2">{item.dish}</p>
-                  <p className="text-sm text-text-secondary line-clamp-2">By {item.cook}</p>
+                <li key={item.dish} className="group w-[9rem] shrink-0 snap-start cursor-pointer sm:w-auto">
+                  <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-text-primary/5 transition-shadow duration-300 group-hover:shadow-float">
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      width={240}
+                      height={180}
+                      sizes="(min-width: 768px) 150px, 144px"
+                      className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <p className="mt-3 text-[15px] font-bold leading-tight text-text-primary line-clamp-2">{item.dish}</p>
+                  <p className="mt-0.5 text-sm font-medium text-text-secondary line-clamp-2">By {item.cook}</p>
                 </li>
               ))}
             </ul>
@@ -212,7 +214,7 @@ export function Hero() {
               height={720}
               sizes="(min-width: 1280px) 520px, (min-width: 768px) 44vw, 88vw"
               priority
-              className="absolute left-1/2 top-1/2 w-[74%] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover shadow-float ring-8 ring-paper/70"
+              className="absolute left-1/2 top-1/2 w-[68%] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover shadow-float ring-8 ring-paper/70"
             />
           </div>
 
@@ -220,7 +222,7 @@ export function Hero() {
           <figure
             data-dish
             data-speed="0.5"
-            className="absolute right-0 top-[8%] w-[9.5rem] rotate-3 bg-paper p-3 shadow-float ring-1 ring-text-primary/5 sm:w-44 sm:p-4 md:-right-6 lg:-right-10"
+            className="absolute right-0 top-[6%] w-[8.5rem] rotate-2 bg-paper p-3 shadow-float ring-1 ring-text-primary/5 sm:w-36 sm:p-4 md:-right-4 lg:-right-8 lg:w-40"
           >
             <span
               aria-hidden
@@ -241,7 +243,7 @@ export function Hero() {
           <div
             data-dish
             data-speed="0.9"
-            className="absolute -bottom-5 right-4 w-24 sm:w-32 md:-right-4 lg:w-36"
+            className="absolute -bottom-4 right-4 w-20 sm:w-28 md:-right-2 lg:w-32"
           >
             <Image
               src={heroSpecial.garnish.src}

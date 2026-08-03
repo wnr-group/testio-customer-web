@@ -77,10 +77,11 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     let isMounted = true;
-    setCookPhone(null);
-    setCookPhoneLoading(true);
 
     async function load() {
+      setCookPhone(null);
+      setCookPhoneLoading(true);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
