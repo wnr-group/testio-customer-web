@@ -85,11 +85,7 @@ export default function LocationPicker({
 
   // Initialise the map + draggable pin when the picker opens.
   useEffect(() => {
-<<<<<<< HEAD
-    if (!open || view !== 'map' || !mapContainerRef.current) return
-=======
-    if (!open || !mapContainerRef.current) return;
->>>>>>> origin/main
+    if (!open || view !== 'map' || !mapContainerRef.current) return;
 
     const map = new mapboxgl.Map({
       accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN!,
@@ -106,21 +102,12 @@ export default function LocationPicker({
     markerRef.current = marker;
 
     const updateFromLngLat = async (lng: number, lat: number) => {
-<<<<<<< HEAD
-      setCoords({ lat, lng })
-      setGeocoding(true)
-      const a = await reverseGeocode(lat, lng, true)
-      setAddress(a || `${lat.toFixed(5)}, ${lng.toFixed(5)}`)
-      setGeocoding(false)
-    }
-=======
       setCoords({ lat, lng });
       setGeocoding(true);
-      const a = await reverseGeocode(lat, lng);
+      const a = await reverseGeocode(lat, lng, true);
       setAddress(a || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       setGeocoding(false);
     };
->>>>>>> origin/main
 
     marker.on("dragend", () => {
       const { lng, lat } = marker.getLngLat();
@@ -137,19 +124,11 @@ export default function LocationPicker({
     }
 
     return () => {
-<<<<<<< HEAD
-      map.remove()
-      mapRef.current = null
-      markerRef.current = null
-    }
-  }, [open, view]) // eslint-disable-line react-hooks/exhaustive-deps
-=======
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
->>>>>>> origin/main
+  }, [open, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced place search.
   useEffect(() => {
@@ -157,13 +136,8 @@ export default function LocationPicker({
 
     if (!query.trim()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-<<<<<<< HEAD
-      setResults([])
-      return
-=======
       setResults([]);
       return;
->>>>>>> origin/main
     }
 
     const t = setTimeout(async () => {
@@ -195,7 +169,6 @@ export default function LocationPicker({
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-<<<<<<< HEAD
           <div className="flex items-center gap-2 min-w-0">
             {view === 'map' && hasSavedAddresses && (
               <button
@@ -216,15 +189,6 @@ export default function LocationPicker({
                   : 'Search an area or drag the pin to your spot'}
               </p>
             </div>
-=======
-          <div>
-            <h3 className="font-bold text-slate-900">
-              Choose your delivery location
-            </h3>
-            <p className="text-xs text-slate-400">
-              Search an area or drag the pin to your spot
-            </p>
->>>>>>> origin/main
           </div>
           <button
             onClick={onClose}

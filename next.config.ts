@@ -17,7 +17,6 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
-<<<<<<< HEAD
       ...(isDev
         ? [
             {
@@ -64,24 +63,10 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-=======
-      {
-        protocol: "http",
-        hostname: "192.168.1.108",
-        port: "54341",
-        pathname: "/storage/v1/object/public/**",
-      },
-      {
-        protocol: "http",
-        hostname: "127.0.0.1",
-        port: "54341",
-        pathname: "/storage/v1/object/public/**",
-      },
       {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
->>>>>>> origin/main
     ],
   },
 };

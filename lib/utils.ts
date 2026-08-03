@@ -39,7 +39,7 @@ export function safeInternalPath(path: string | null | undefined): string | null
   return path
 }
 
-export async function reverseGeocode(lat: number, lng: number, forStorage: boolean = false): Promise<string | null> {
+export async function reverseGeocode(lat: number, lng: number, forStorage: boolean = false, signal?: AbortSignal): Promise<string | null> {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const isPermanent = process.env.NEXT_PUBLIC_MAPBOX_PERMANENT === "true";
 
@@ -52,7 +52,7 @@ export async function reverseGeocode(lat: number, lng: number, forStorage: boole
       if (isPermanent) {
         url.searchParams.set("permanent", "true");
       }
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), { signal });
       if (res.ok) {
         const data = await res.json();
         if (data.features && data.features.length > 0) {
@@ -73,6 +73,7 @@ export async function reverseGeocode(lat: number, lng: number, forStorage: boole
         headers: {
           "User-Agent": "TestioCustomerWebApp/1.0",
         },
+        signal,
       }
     );
     if (res.ok) {

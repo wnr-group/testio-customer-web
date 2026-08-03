@@ -94,11 +94,7 @@ export default function OrderDetailPage() {
   const { assignment: liveAssignment } = useRealtimeDeliveryAssignment(id);
 
   useEffect(() => {
-<<<<<<< HEAD
-    let isMounted = true;
-=======
     let cancelled = false;
->>>>>>> origin/main
 
     async function load() {
       // Reset all order-related state immediately so stale values from a
@@ -136,32 +132,18 @@ export default function OrderDetailPage() {
       }
       setOrder(orderData as unknown as OrderRow);
 
-<<<<<<< HEAD
       // Runs independently of the main load flow so setLoading(false) below
       // doesn't wait on it — the button has its own cookPhoneLoading state.
       supabase
         .rpc("get_order_cook_phone", { p_order_id: id })
         .then(({ data: phoneData, error: phoneError }) => {
-          if (!isMounted) return;
+          if (cancelled) return;
           if (phoneError) {
             console.error("Fetch cook phone error:", phoneError);
           }
           setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
           setCookPhoneLoading(false);
         });
-=======
-      const { data: phoneData, error: phoneError } = await supabase.rpc(
-        "get_order_cook_phone",
-        { p_order_id: id }
-      );
-      if (!cancelled) {
-        if (phoneError) {
-          console.error("Fetch cook phone error:", phoneError);
-        }
-        setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
-        setCookPhoneLoading(false);
-      }
->>>>>>> origin/main
 
       const { data: itemsData } = await supabase
         .from("order_items")
@@ -177,7 +159,7 @@ export default function OrderDetailPage() {
         .maybeSingle();
       if (assignmentError) {
         console.error("Fetch delivery assignment error:", assignmentError);
-      } else if (isMounted) {
+      } else if (!cancelled) {
         setAssignment(assignmentData as DeliveryAssignmentRow | null);
       }
 
@@ -187,29 +169,19 @@ export default function OrderDetailPage() {
           .select("id")
           .eq("order_id", id)
           .maybeSingle();
-<<<<<<< HEAD
-        if (isMounted) setHasReview(!!reviewData);
-=======
         if (cancelled) return;
         setHasReview(!!reviewData);
->>>>>>> origin/main
       }
 
-      if (isMounted) setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
     load();
-<<<<<<< HEAD
-
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-=======
-    return () => { cancelled = true; };
-  }, [id, supabase, router]);
->>>>>>> origin/main
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";
   const currentAssignment = liveAssignment ?? assignment;

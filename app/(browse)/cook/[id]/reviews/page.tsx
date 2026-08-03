@@ -65,7 +65,7 @@ export default function CookReviewsPage() {
   const [page, setPage] = useState(1);
 
   // 1. Fetch cook metadata summary
-  const { data: cook, isLoading: isLoadingCook } = useQuery({
+  const { data: cook, isLoading: isLoadingCook, isError: isErrorCook, error: errorCook } = useQuery({
     queryKey: ["cookSummary", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,15 +87,11 @@ export default function CookReviewsPage() {
     isLoading: isLoadingReviews,
     isFetching: isFetchingReviews,
     isPlaceholderData,
+    isError: isErrorReviews,
+    error: errorReviews,
   } = useQuery({
     queryKey: ["reviews", id, page],
 
-<<<<<<< HEAD
-      setCook(cookData ?? null);
-      setReviews((reviewData as unknown as ReviewRow[]) ?? []);
-      setLoading(false);
-    }
-=======
     queryFn: async () => {
       const from = (page - 1) * 10;
       const to = from + 9;
@@ -105,7 +101,6 @@ export default function CookReviewsPage() {
         .eq("cook_id", id)
         .order("created_at", { ascending: false })
         .range(from, to);
->>>>>>> origin/main
 
       if (error) throw error;
       return {
@@ -122,6 +117,25 @@ export default function CookReviewsPage() {
   const reviews = reviewsData?.reviews ?? [];
 
   const showSkeleton = isLoadingCook || (isLoadingReviews && !reviewsData);
+
+  if (isErrorCook || isErrorReviews) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8">
+        <div className="mx-auto max-w-2xl text-center flex flex-col items-center justify-center min-h-[50vh] gap-4">
+          <div className="text-[#D61A22] bg-red-50 p-4 rounded-full inline-block">
+            <MessageSquareText className="size-8 mx-auto" />
+          </div>
+          <h2 className="text-xl font-bold text-[#091A36]">Failed to load reviews</h2>
+          <p className="text-slate-500 text-sm max-w-sm">
+            {errorCook?.message || errorReviews?.message || "Something went wrong while fetching the reviews."}
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8">

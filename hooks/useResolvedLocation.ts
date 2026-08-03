@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { reverseGeocode } from '@/lib/utils'
 
@@ -88,7 +88,15 @@ export function useResolvedLocation() {
 
     void (async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      let user = null;
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        if (!error) {
+          user = data.user
+        }
+      } catch (err) {
+        console.error("Failed to fetch user", err);
+      }
 
       // 0. Already resolved/picked earlier this session — skip re-resolving
       // entirely so a manual pick survives unmount/remount (e.g. back-navigation).
@@ -99,6 +107,8 @@ export function useResolvedLocation() {
         setStatus('ready')
         return
       }
+
+      if (cancelled) return
 
       // 1. Device geolocation
       const geo = await tryGeolocation()
@@ -147,14 +157,25 @@ export function useResolvedLocation() {
       const defaultLat = 13.0827
       const defaultLng = 80.2707
       try {
-        const label = (await reverseGeocode(defaultLat, defaultLng)) || 'Chennai, Tamil Nadu'
+        const abortController = new AbortController()
+        const timeoutId = setTimeout(() => abortController.abort(), 8000)
+        let label = 'Chennai, Tamil Nadu'
+        try {
+          label = (await reverseGeocode(defaultLat, defaultLng, false, abortController.signal)) || label
+        } finally {
+          clearTimeout(timeoutId)
+        }
         if (cancelled) return
-        setLocationState({ lat: defaultLat, lng: defaultLng, label, source: 'picked' })
+        const resolved: ResolvedLocation = { lat: defaultLat, lng: defaultLng, label, source: 'picked' }
+        storeLocation(resolved, user?.id)
+        setLocationState(resolved)
         setStatus('ready')
       } catch (e) {
         console.error('Failed to reverse geocode default city coords', e)
         if (cancelled) return
-        setLocationState({ lat: defaultLat, lng: defaultLng, label: 'Chennai, Tamil Nadu', source: 'picked' })
+        const resolved: ResolvedLocation = { lat: defaultLat, lng: defaultLng, label: 'Chennai, Tamil Nadu', source: 'picked' }
+        storeLocation(resolved, user?.id)
+        setLocationState(resolved)
         setStatus('ready')
       }
     })()
@@ -164,13 +185,23 @@ export function useResolvedLocation() {
     }
   }, [])
 
+  const setLocationGenerationRef = useRef(0)
+
   // Called when the user picks/changes a location (e.g. from the picker).
   const setLocation = useCallback((loc: ResolvedLocation) => {
     setLocationState(loc)
     setStatus('ready')
     const supabase = createClient()
+    const gen = ++setLocationGenerationRef.current
     supabase.auth.getUser().then(({ data: { user } }) => {
-      storeLocation(loc, user?.id)
+      if (gen === setLocationGenerationRef.current) {
+        storeLocation(loc, user?.id)
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch user in setLocation", err)
+      if (gen === setLocationGenerationRef.current) {
+        storeLocation(loc, undefined)
+      }
     })
   }, [])
 
