@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
   Coins,
   Copy,
   Check,
+  FileText,
   Phone,
   ChevronRight,
 } from "lucide-react";
@@ -37,12 +39,10 @@ type ProfileRow = {
 export default function ProfilePage() {
   const router = useRouter();
   const supabase = createClient();
+  const { user: authUser, clear: clearAuthStore } = useAuthStore();
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -57,53 +57,54 @@ export default function ProfilePage() {
         return;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("users")
         .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
-        console.error("Error loading profile:", error);
-        toast.error("Failed to load your profile");
-        setLoading(false);
-        return;
+      if (!data && (user.phone || user.user_metadata?.phone)) {
+        const phone = user.phone || user.user_metadata?.phone;
+        const { data: rpcData } = await supabase.rpc("ensure_customer_profile", {
+          p_phone: phone,
+        });
+
+        if (rpcData) {
+          data = rpcData as ProfileRow;
+        } else {
+          const { data: refetched } = await supabase
+            .from("users")
+            .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
+            .eq("id", user.id)
+            .maybeSingle();
+          data = refetched;
+        }
       }
 
-      setProfile(data);
-      setName(data.name ?? "");
-      setEmail(data.email ?? "");
+      if (!data && user) {
+        data = {
+          id: user.id,
+          name: user.user_metadata?.name || null,
+          phone: user.phone || user.user_metadata?.phone || "",
+          email: user.email || null,
+          avatar_url: null,
+          coin_balance: 0,
+          referral_code: null,
+        };
+      }
+
+      if (data) {
+        setProfile(data);
+      } else {
+        console.error("Error loading profile:", error);
+        toast.error("Failed to load your profile");
+      }
+
       setLoading(false);
     }
 
     loadProfile();
   }, [supabase, router]);
-
-  const handleSave = async () => {
-    if (!profile) return;
-    if (!name.trim()) {
-      toast.error("Name cannot be empty");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("users")
-        .update({ name: name.trim(), email: email.trim() || null })
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      setProfile({ ...profile, name: name.trim(), email: email.trim() || null });
-      toast.success("Profile updated");
-    } catch (err: any) {
-      console.error("Error saving profile:", err);
-      toast.error(err.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleCopyReferral = async () => {
     if (!profile?.referral_code) return;
@@ -121,7 +122,8 @@ export default function ProfilePage() {
     setSigningOut(true);
     try {
       await supabase.auth.signOut();
-      router.push("/login");
+      clearAuthStore();
+      router.push("/");
     } catch (err: any) {
       console.error("Error signing out:", err);
       toast.error("Failed to log out");
@@ -129,16 +131,16 @@ export default function ProfilePage() {
     }
   };
 
-  const initials = (name || profile?.name || "U")
+  const displayName = profile?.name || authUser?.user_metadata?.name || "User";
+  const userPhone = profile?.phone || authUser?.phone || authUser?.user_metadata?.phone || "";
+
+  const initials = displayName
     .trim()
     .split(/\s+/)
-    .map((part) => part[0])
+    .map((part: string) => part[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase();
-
-  const dirty =
-    !!profile && (name.trim() !== (profile.name ?? "") || email.trim() !== (profile.email ?? ""));
+    .toUpperCase() || "U";
 
   if (loading) {
     return (
@@ -155,7 +157,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profile) {
+  if (!profile && !authUser) {
     return (
       <div className="min-h-screen bg-[#FAF8F8] flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-sm flex flex-col items-center gap-4 bg-white border border-slate-100/80 rounded-2xl p-8 shadow-sm">
@@ -171,13 +173,18 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#FAF8F8] py-10 px-4 md:px-8">
       <div className="mx-auto max-w-2xl flex flex-col gap-6">
-        <h1 className="text-3xl font-extrabold text-[#091A36] tracking-tight">My Profile</h1>
+        <h1 className="text-3xl font-extrabold text-[#091A36] tracking-tight">
+          My Profile
+        </h1>
 
         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <Avatar className="size-20" size="lg">
-              {profile.avatar_url ? (
-                <AvatarImage src={profile.avatar_url} alt={profile.name ?? "Profile"} />
+              {profile?.avatar_url || authUser?.user_metadata?.avatar_url ? (
+                <AvatarImage
+                  src={profile?.avatar_url || authUser?.user_metadata?.avatar_url}
+                  alt={displayName}
+                />
               ) : null}
               <AvatarFallback className="bg-[#D61A22]/10 text-[#D61A22] text-lg font-bold">
                 {initials}
@@ -185,11 +192,11 @@ export default function ProfilePage() {
             </Avatar>
             <div className="min-w-0">
               <p className="text-lg font-bold text-[#091A36] truncate">
-                {profile.name || "Add your name"}
+                {displayName}
               </p>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold mt-1">
                 <Phone className="size-3.5" />
-                <span>{profile.phone}</span>
+                <span>{userPhone || "No phone linked"}</span>
               </div>
             </div>
           </div>
@@ -198,107 +205,83 @@ export default function ProfilePage() {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name" className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Name
+              <Label
+                htmlFor="name"
+                className="text-xs font-bold text-slate-400 uppercase tracking-wide"
+              >
+                Display Name
               </Label>
               <Input
                 id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="h-10 rounded-xl border-slate-200 text-sm"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email" className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="h-10 rounded-xl border-slate-200 text-sm"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Phone
-              </Label>
-              <Input
-                value={profile.phone}
+                value={displayName}
                 disabled
                 className="h-10 rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500"
               />
             </div>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving || !dirty}
-              className="w-full bg-[#D61A22] hover:bg-[#b21018] text-white rounded-xl font-bold text-xs tracking-wider h-10 flex items-center justify-center gap-1.5 mt-1 disabled:opacity-40"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" /> Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 flex flex-col gap-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-[#F5A623]/10 text-[#C29B38]">
-                <Coins className="size-5" />
-              </div>
-              <div>
-                <p className="text-lg font-extrabold text-[#091A36] leading-tight">
-                  {profile.coin_balance}
-                </p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                  TESTIO Coins
-                </p>
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                Phone Number
+              </Label>
+              <Input
+                value={userPhone}
+                disabled
+                className="h-10 rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500"
+              />
             </div>
           </div>
+        </Card>
 
-          {profile.referral_code && (
-            <>
-              <Separator className="bg-slate-100" />
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">
-                    Referral Code
+        {profile && (
+          <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-[#F5A623]/10 text-[#C29B38]">
+                  <Coins className="size-5" />
+                </div>
+                <div>
+                  <p className="text-lg font-extrabold text-[#091A36] leading-tight">
+                    {profile.coin_balance}
                   </p>
-                  <p className="text-sm font-extrabold text-[#091A36] tracking-widest">
-                    {profile.referral_code}
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                    TESTIO Coins
                   </p>
                 </div>
-                <Button
-                  onClick={handleCopyReferral}
-                  variant="outline"
-                  className="rounded-xl border-slate-200 font-bold text-xs h-9 shrink-0 flex items-center gap-1.5"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="size-3.5 text-emerald-600" /> Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-3.5" /> Copy
-                    </>
-                  )}
-                </Button>
               </div>
-            </>
-          )}
-        </Card>
+            </div>
+
+            {profile.referral_code && (
+              <>
+                <Separator className="bg-slate-100" />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">
+                      Referral Code
+                    </p>
+                    <p className="text-sm font-extrabold text-[#091A36] tracking-widest">
+                      {profile.referral_code}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleCopyReferral}
+                    variant="outline"
+                    className="rounded-xl border-slate-200 font-bold text-xs h-9 shrink-0 flex items-center gap-1.5"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="size-3.5 text-emerald-600" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="size-3.5" /> Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </Card>
+        )}
 
         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] overflow-hidden">
           <Link
@@ -307,10 +290,13 @@ export default function ProfilePage() {
           >
             <div className="flex items-center gap-3">
               <MapPin className="size-4 text-slate-400" />
-              <span className="text-sm font-bold text-slate-700">Saved Addresses</span>
+              <span className="text-sm font-bold text-slate-700">
+                Saved Addresses
+              </span>
             </div>
             <ChevronRight className="size-4 text-slate-300" />
           </Link>
+
           <Separator className="bg-slate-100" />
           <Link
             href="/notifications"
@@ -318,7 +304,22 @@ export default function ProfilePage() {
           >
             <div className="flex items-center gap-3">
               <Bell className="size-4 text-slate-400" />
-              <span className="text-sm font-bold text-slate-700">Notifications</span>
+              <span className="text-sm font-bold text-slate-700">
+                Notifications
+              </span>
+            </div>
+            <ChevronRight className="size-4 text-slate-300" />
+          </Link>
+          <Separator className="bg-slate-100" />
+          <Link
+            href="/agreement"
+            className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="size-4 text-slate-400" />
+              <span className="text-sm font-bold text-slate-700">
+                Terms & Agreement
+              </span>
             </div>
             <ChevronRight className="size-4 text-slate-300" />
           </Link>
@@ -327,7 +328,7 @@ export default function ProfilePage() {
         <Button
           onClick={handleLogout}
           disabled={signingOut}
-          variant="outline"
+          variant="destructive"
           className="w-full rounded-xl border-slate-200 text-[#D61A22] hover:bg-red-50 hover:text-[#D61A22] font-bold text-xs tracking-wider h-10 flex items-center justify-center gap-1.5"
         >
           {signingOut ? (
