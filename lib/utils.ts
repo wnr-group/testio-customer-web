@@ -44,12 +44,13 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
   if (mapboxToken) {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&limit=1`
+        `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${mapboxToken}`
       );
       if (res.ok) {
         const data = await res.json();
         if (data.features && data.features.length > 0) {
-          return data.features[0].place_name;
+          const props = data.features[0].properties;
+          return props.full_address || props.place_formatted || props.name || null;
         }
       }
     } catch (error) {
