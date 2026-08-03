@@ -116,7 +116,16 @@ export function useRealtimeDeliveryAssignment(orderId: string) {
           setAssignment(payload.new as DeliveryAssignmentRow)
         }
       )
-      .subscribe()
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          const { data } = await supabase
+            .from('delivery_assignments')
+            .select('status, otp_code')
+            .eq('order_id', orderId)
+            .maybeSingle()
+          if (data) setAssignment(data as DeliveryAssignmentRow)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -198,6 +207,7 @@ add:
 
 ```ts
 
+      setAssignment(null);
       const { data: assignmentData, error: assignmentError } = await supabase
         .from("delivery_assignments")
         .select("status, otp_code")
@@ -205,6 +215,7 @@ add:
         .maybeSingle();
       if (assignmentError) {
         console.error("Fetch delivery assignment error:", assignmentError);
+        if (isMounted) setAssignment(null);
       } else if (isMounted) {
         setAssignment(assignmentData as DeliveryAssignmentRow | null);
       }
@@ -350,14 +361,16 @@ Immediately after the existing `const { status: liveStatus } = useRealtimeOrder(
 Immediately after the existing `const currentStatus: OrderStatus = ...` line (currently `page.tsx:157`), add the merged assignment and the visibility gate:
 
 ```ts
-  const currentAssignment = liveAssignment ?? assignment;
+  const currentAssignment = liveAssignment !== undefined ? liveAssignment : assignment;
   const showDeliveryOtp =
     order != null &&
     order.delivery_type === "delivery" &&
     !!currentAssignment?.otp_code &&
     (currentAssignment.status === "assigned" || currentAssignment.status === "picked_up") &&
     currentStatus !== "cancelled" &&
-    currentStatus !== "rejected";
+    currentStatus !== "rejected" &&
+    currentStatus !== "delivered" &&
+    currentStatus !== "completed";
 ```
 
 This is evaluated on every render (cheap boolean derivation, same pattern as the existing `canCancel` on the next line) — no extra state, no extra effect.

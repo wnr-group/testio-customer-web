@@ -44,7 +44,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
   if (mapboxToken) {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${mapboxToken}`
+        `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${mapboxToken}&permanent=true`
       );
       if (res.ok) {
         const data = await res.json();

@@ -76,6 +76,10 @@ export default function OrderDetailPage() {
   const { status: liveStatus } = useRealtimeOrder(id);
 
   useEffect(() => {
+    let isMounted = true;
+    setCookPhone(null);
+    setCookPhoneLoading(true);
+
     async function load() {
       const {
         data: { user },
@@ -94,6 +98,8 @@ export default function OrderDetailPage() {
         .eq("id", id)
         .single();
 
+      if (!isMounted) return;
+
       if (orderError || !orderData) {
         toast.error("Order not found");
         router.push("/orders");
@@ -105,6 +111,9 @@ export default function OrderDetailPage() {
         "get_order_cook_phone",
         { p_order_id: id }
       );
+      
+      if (!isMounted) return;
+
       if (phoneError) {
         console.error("Fetch cook phone error:", phoneError);
       }
@@ -115,6 +124,8 @@ export default function OrderDetailPage() {
         .from("order_items")
         .select("id, quantity, unit_price, total_price, dishes ( name, image_url )")
         .eq("order_id", id);
+      
+      if (!isMounted) return;
       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
 
       if (orderData.status === "completed") {
@@ -123,13 +134,17 @@ export default function OrderDetailPage() {
           .select("id")
           .eq("order_id", id)
           .maybeSingle();
-        setHasReview(!!reviewData);
+        if (isMounted) setHasReview(!!reviewData);
       }
 
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
 
     load();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id, supabase, router]);
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";

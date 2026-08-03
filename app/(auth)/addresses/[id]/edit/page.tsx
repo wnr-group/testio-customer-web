@@ -65,7 +65,12 @@ export default function EditAddressPage() {
         return;
       }
 
-      if (picked.isDefault) {
+      let finalIsDefault = picked.isDefault;
+      if (!picked.isDefault && existing.is_default) {
+        finalIsDefault = true;
+      }
+
+      if (finalIsDefault) {
         const { error: clearError } = await supabase
           .from("customer_addresses")
           .update({ is_default: false })
@@ -80,7 +85,7 @@ export default function EditAddressPage() {
           address_line: picked.address,
           lat: picked.lat,
           lng: picked.lng,
-          is_default: picked.isDefault,
+          is_default: finalIsDefault,
         })
         .eq("id", id);
       if (error) throw error;
