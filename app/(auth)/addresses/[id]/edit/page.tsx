@@ -66,7 +66,7 @@ export default function EditAddressPage() {
       }
 
       let finalIsDefault = picked.isDefault;
-      if (!picked.isDefault && existing.is_default) {
+      if (!picked.isDefault && existing?.is_default) {
         finalIsDefault = true;
       }
 

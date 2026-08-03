@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
@@ -46,7 +46,7 @@ export default function NotificationsPage() {
   const [page, setPage] = useState(1);
 
   // 1. Paginated Query via useQuery (20 per page)
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["notifications", page],
     queryFn: async () => {
       const {
@@ -54,7 +54,6 @@ export default function NotificationsPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login");
         throw new Error("Not authenticated");
       }
 
@@ -76,6 +75,12 @@ export default function NotificationsPage() {
       };
     },
   });
+
+  useEffect(() => {
+    if (isError && error?.message === "Not authenticated") {
+      router.push("/login");
+    }
+  }, [isError, error, router]);
 
   const notifications = data?.notifications || [];
   const totalCount = data?.totalCount || 0;
