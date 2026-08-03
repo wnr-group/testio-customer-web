@@ -701,6 +701,9 @@ export type Database = {
           error_detail: string | null
           expo_ticket_id: string | null
           id: string
+          is_read: boolean | null
+          link: string | null
+          metadata: Json | null
           recipient_id: string | null
           status: string
           title: string
@@ -713,6 +716,9 @@ export type Database = {
           error_detail?: string | null
           expo_ticket_id?: string | null
           id?: string
+          is_read?: boolean | null
+          link?: string | null
+          metadata?: Json | null
           recipient_id?: string | null
           status?: string
           title: string
@@ -725,6 +731,9 @@ export type Database = {
           error_detail?: string | null
           expo_ticket_id?: string | null
           id?: string
+          is_read?: boolean | null
+          link?: string | null
+          metadata?: Json | null
           recipient_id?: string | null
           status?: string
           title?: string

@@ -11,17 +11,7 @@ import Image from 'next/image'
 import { gsap, useGSAP } from '@/lib/gsap'
 import { hero, heroFeatured, heroSpecial } from '@/lib/marketing-content'
 import { TrustRibbon } from '@/components/marketing/TrustRibbon'
-
-// Decorative only, drawn inline so the hero adds no extra image request
-// above the fold (protects LCP).
-function Leaf({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 60" aria-hidden className={className} fill="none">
-      <path d="M2 44C18 8 62 0 98 6c-6 34-42 52-72 46-10-2-18-6-24-8Z" fill="currentColor" />
-      <path d="M8 44C34 30 66 16 96 8" stroke="rgb(0 0 0 / 0.18)" strokeWidth="2" />
-    </svg>
-  )
-}
+import { Leaf } from '@/components/marketing/icons'
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null)
@@ -106,13 +96,13 @@ export function Hero() {
     >
       <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-6 px-3 md:grid-cols-[48%_52%] lg:gap-12">
         {/* ---------------- left: copy, CTAs, featured cards ---------------- */}
-        <div data-hero-copy className="relative z-10">
+        <div data-hero-copy className="relative z-10 md:-mt-12 lg:-mt-20">
           <h1
             data-ink
-            className="max-w-[12em] text-4xl font-extrabold leading-[0.95] tracking-tight text-text-primary sm:text-5xl lg:text-[clamp(56px,5vw,84px)]"
+            className="max-w-[12em] text-4xl font-extrabold leading-[0.95] tracking-tight text-text-primary sm:text-5xl lg:text-[clamp(50px,4.5vw,72px)]"
           >
             {hero.headline.map((line) => (
-              <span key={line} className="block overflow-hidden">
+              <span key={line} className="block overflow-hidden pb-[0.5em] -mb-[0.5em]">
                 <span data-hero-line className="block">
                   {line === hero.underlineWord ? (
                     <span className="relative inline-block">
@@ -175,7 +165,7 @@ export function Hero() {
             {/* Snap strip on phones, 4-up grid from sm. */}
             <ul className="-mx-4 mt-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0">
               {heroFeatured.map((item) => (
-                <li key={item.dish} className="group w-[9rem] shrink-0 snap-start cursor-pointer sm:w-auto">
+                <li key={item.dish} className="group w-[9rem] shrink-0 snap-start sm:w-auto">
                   <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-text-primary/5 transition-shadow duration-300 group-hover:shadow-float">
                     <Image
                       src={item.src}
@@ -198,7 +188,7 @@ export function Hero() {
         <div
           data-hero-art
           data-ink
-          className="relative mx-auto w-full sm:mx-0 md:mx-0"
+          className="relative mx-auto w-full sm:mx-0 md:mx-0 md:-mt-12 lg:-mt-20"
         >
           <div className="relative aspect-square overflow-hidden rounded-panel bg-gradient-to-br from-brand-secondary via-amber-mid to-amber-deep shadow-panel">
             <div

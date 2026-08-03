@@ -98,24 +98,24 @@ export function AmbassadorSection() {
     <section
       ref={ref}
       data-ambassador-section
-      className="relative flex min-h-[min(100svh,65rem)] w-full items-center overflow-hidden bg-[#191210] px-4 py-24 md:py-32"
+      className="relative flex min-h-[min(100svh,65rem)] w-full items-center overflow-hidden bg-[--color-bg-base] px-4 py-24 md:py-32"
     >
       {/* Background Layers */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(232,32,42,0.05)_0%,rgba(25,18,16,1)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-brand-primary)_0%,var(--color-bg-base)_100%)] opacity-[0.03]" />
       
       {/* Soft circular rings behind everything */}
       <div 
         data-amb-ring 
-        className="absolute right-[5%] top-[10%] h-[800px] w-[800px] rounded-full border border-white/[0.02] lg:right-[15%] lg:top-[20%]" 
+        className="absolute right-[5%] top-[10%] h-[800px] w-[800px] rounded-full border border-black/[0.03] lg:right-[15%] lg:top-[20%]" 
       />
       <div 
         data-amb-ring 
-        className="absolute right-[10%] top-[15%] h-[600px] w-[600px] rounded-full border border-white/[0.03] lg:right-[20%] lg:top-[25%]" 
+        className="absolute right-[10%] top-[15%] h-[600px] w-[600px] rounded-full border border-black/[0.04] lg:right-[20%] lg:top-[25%]" 
       />
 
       <div
         data-amb-glow
-        className="absolute bottom-0 right-[10%] h-[70vh] w-[70vh] bg-[radial-gradient(circle_at_center,rgba(232,32,42,0.15)_0%,transparent_60%)] mix-blend-screen blur-[80px]"
+        className="absolute bottom-0 right-[10%] h-[70vh] w-[70vh] bg-[radial-gradient(circle_at_center,rgba(232,32,42,0.08)_0%,transparent_60%)] mix-blend-multiply blur-[80px]"
       />
       
       {/* Tiny particles / noise pattern overlay */}
@@ -128,22 +128,22 @@ export function AmbassadorSection() {
         
         {/* Left Side: Content */}
         <div className="relative z-20 flex flex-col justify-center lg:col-span-5 lg:pl-8 xl:pl-16">
-          <p data-amb-stagger className="text-xs font-black uppercase tracking-[0.25em] text-[#E8202A]">
+          <p data-amb-stagger className="text-xs font-black uppercase tracking-[0.25em] text-[--color-brand-secondary]">
             {ambassador.eyebrow}
           </p>
           
-          <h2 data-amb-stagger className="mt-4 text-5xl font-black leading-[1.05] tracking-tight text-[#FFF9F2] md:text-6xl xl:text-7xl">
+          <h2 data-amb-stagger className="mt-4 text-5xl font-black leading-[1.05] tracking-tight text-text-primary md:text-6xl xl:text-7xl">
             {ambassador.heading}
           </h2>
           
-          <div data-amb-stagger className="mt-8 flex flex-col gap-1 border-l-[3px] border-[#E8202A]/50 pl-5">
+          <div data-amb-stagger data-amb-copy className="mt-8 flex flex-col gap-1 border-l-[3px] border-[--color-brand-primary]/50 pl-5">
             {ambassador.name && (
-              <p className="text-xl font-bold tracking-tight text-[#FFF9F2]">{ambassador.name}</p>
+              <p className="text-xl font-bold tracking-tight text-text-primary">{ambassador.name}</p>
             )}
-            <p className="text-sm font-semibold text-[#F5A623]/90">{ambassador.title}</p>
+            <p className="text-sm font-semibold text-text-secondary">{ambassador.title}</p>
           </div>
           
-          <p data-amb-stagger className="mt-8 max-w-lg text-lg leading-relaxed text-white/70">
+          <p data-amb-stagger className="mt-8 max-w-lg text-lg leading-relaxed text-text-secondary">
             {ambassador.body}
           </p>
 
@@ -156,19 +156,35 @@ export function AmbassadorSection() {
               return (
                 <div 
                   key={stat.label}
-                  className="group relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[#191210]/50 p-5 text-center backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#F5A623]/30 hover:bg-[#191210]/80 hover:shadow-[0_10px_40px_rgba(232,32,42,0.15)]"
+                  className="group relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-border-color bg-surface p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-md"
                 >
                   {/* Subtle highlight */}
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-black/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-2xl shadow-inner backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
-                    {stat.value}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/[0.03] text-2xl transition-transform duration-300 group-hover:scale-110">
+                    {stat.value === '🇮🇳' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" className="h-6 w-9 rounded-sm shadow-sm">
+                        <rect width="900" height="200" fill="#FF9933"/>
+                        <rect y="200" width="900" height="200" fill="#FFFFFF"/>
+                        <rect y="400" width="900" height="200" fill="#138808"/>
+                        <circle cx="450" cy="300" r="80" fill="none" stroke="#000080" strokeWidth="12"/>
+                        <circle cx="450" cy="300" r="16" fill="#000080"/>
+                        <g stroke="#000080" strokeWidth="8">
+                          <line x1="450" y1="220" x2="450" y2="380"/>
+                          <line x1="370" y1="300" x2="530" y2="300"/>
+                          <line x1="393.4" y1="243.4" x2="506.6" y2="356.6"/>
+                          <line x1="393.4" y1="356.6" x2="506.6" y2="243.4"/>
+                        </g>
+                      </svg>
+                    ) : (
+                      stat.value
+                    )}
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-white/50">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary/70">
                       {firstWord}
                     </span>
-                    <span className="block text-sm font-bold text-white/90">
+                    <span className="block text-sm font-bold text-text-primary">
                       {restWords}
                     </span>
                   </div>
@@ -179,12 +195,12 @@ export function AmbassadorSection() {
 
           {/* Premium Testimonial Card */}
           {ambassador.quote && (
-            <div data-amb-quote className="relative mt-12 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[#191210]/60 p-8 shadow-2xl backdrop-blur-xl">
+            <div data-amb-quote className="relative mt-12 overflow-hidden rounded-2xl border border-[--color-brand-secondary]/20 bg-surface/80 p-8 shadow-card backdrop-blur-xl">
               {/* Thin left accent line */}
-              <div className="absolute left-0 top-0 h-full w-[2px] bg-[#E8202A]/70" />
+              <div className="absolute left-0 top-0 h-full w-[2px] bg-[--color-brand-primary]/70" />
               {/* Large quotation mark */}
-              <Quote className="absolute right-6 top-6 h-20 w-20 text-white/[0.03]" />
-              <p className="relative z-10 text-lg italic leading-relaxed text-white/80">
+              <Quote className="absolute right-6 top-6 h-20 w-20 text-black/[0.03]" />
+              <p className="relative z-10 text-lg italic leading-relaxed text-text-secondary">
                 &quot;{ambassador.quote}&quot;
               </p>
             </div>
@@ -193,7 +209,7 @@ export function AmbassadorSection() {
           <div data-amb-stagger className="mt-12">
             <Link
               href={ambassador.cta.href}
-              className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full bg-[#E8202A] px-8 py-4 text-sm font-bold text-[#FFF9F2] shadow-[0_4px_20px_rgba(232,32,42,0.3)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(232,32,42,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5A623]"
+              className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-cream shadow-card transition-all duration-300 hover:scale-[1.02] hover:shadow-float focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-secondary"
             >
               <span className="absolute inset-0 -translate-x-[100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-[100%]" />
               <span className="relative">{ambassador.cta.label}</span>
@@ -203,9 +219,9 @@ export function AmbassadorSection() {
         </div>
 
         {/* Right Side: Visual Redesign */}
-        <div className="relative z-10 mt-16 flex h-[500px] w-full items-end justify-center lg:col-span-7 lg:mt-0 lg:h-[800px] xl:h-[900px] lg:justify-center">
+        <div data-amb-stage className="relative z-10 mt-16 flex h-[500px] w-full items-end justify-center lg:col-span-7 lg:mt-0 lg:h-[800px] xl:h-[900px] lg:justify-center">
           
-          <div className="relative flex h-[95%] w-full max-w-[450px] xl:max-w-[500px] items-end justify-center">
+          <div data-amb-cutout className="relative flex h-[95%] w-full max-w-[450px] xl:max-w-[500px] items-end justify-center">
             {/* Grounding floor shadow */}
             <div className="absolute bottom-0 left-1/2 h-8 w-[130%] -translate-x-1/2 rounded-[100%] bg-black/90 blur-2xl" />
 
@@ -215,7 +231,6 @@ export function AmbassadorSection() {
                 src={ambassador.images.cutout}
                 alt={ambassador.name ?? 'TESTIO brand ambassador'}
                 fill
-                priority
                 sizes="(min-width: 1024px) 40vw, 100vw"
                 className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)] p-4 pt-12 contrast-[1.03] saturate-[0.97]"
               />
@@ -235,10 +250,10 @@ export function AmbassadorSection() {
                 />
               </div>
               
-              {/* Card 2: Top Right */}
+              {/* Card 2: Middle Right */}
               <div 
                 data-amb-card 
-                className="absolute -right-[25%] top-[18%] xl:-right-[30%] xl:top-[18%] rotate-[4deg]"
+                className="absolute -right-[25%] top-[40%] xl:-right-[30%] xl:top-[40%] rotate-[4deg]"
               >
                 <AchievementCard
                   src={ambassador.images.medals}
@@ -277,21 +292,21 @@ export function AmbassadorSection() {
 function AchievementCard({ src, alt, title }: { src: string; alt: string; title: string }) {
   return (
     <figure 
-      className="group relative w-48 shrink-0 overflow-hidden rounded-2xl border border-[#F5A623]/10 bg-[#191210] p-2 shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:border-[#F5A623]/40 hover:shadow-[0_30px_60px_rgba(232,32,42,0.2)] xl:w-56"
+      className="group relative w-48 shrink-0 overflow-hidden rounded-2xl border border-border-color bg-surface p-2 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:border-black/10 hover:shadow-md xl:w-56"
     >
       {/* Subtle top highlight */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F5A623]/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[--color-brand-secondary]/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[#191210] shadow-inner">
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-zinc-300 shadow-inner">
         <Image
           src={src}
           alt={alt}
           fill
           sizes="(min-width: 1280px) 224px, 192px"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+          className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.05]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#191210] via-[#191210]/40 to-transparent opacity-90" />
-        <figcaption className="absolute bottom-4 left-4 right-4 text-center text-xs font-bold uppercase tracking-widest text-[#FFF9F2] drop-shadow-md">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
+        <figcaption className="absolute bottom-4 left-4 right-4 text-center text-xs font-bold uppercase tracking-widest text-white drop-shadow-md">
           {title}
         </figcaption>
       </div>

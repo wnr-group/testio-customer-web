@@ -11,11 +11,7 @@ import { Bell, CheckCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
 
-type NotificationLog = Database["public"]["Tables"]["notification_logs"]["Row"] & {
-  is_read?: boolean;
-  link?: string | null;
-  metadata?: { link?: string; order_id?: string; [key: string]: unknown } | null;
-};
+type NotificationLog = Database["public"]["Tables"]["notification_logs"]["Row"];
 
 const PAGE_SIZE = 20;
 
@@ -98,7 +94,7 @@ export default function NotificationsPage() {
 
       const { error } = await supabase
         .from("notification_logs")
-        .update({ is_read: true } as any)
+        .update({ is_read: true })
         .eq("recipient_id", user.id)
         .eq("is_read", false);
 
@@ -118,7 +114,7 @@ export default function NotificationsPage() {
     if (!notification.is_read) {
       await supabase
         .from("notification_logs")
-        .update({ is_read: true } as any)
+        .update({ is_read: true })
         .eq("id", notification.id);
 
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -126,9 +122,9 @@ export default function NotificationsPage() {
 
     const targetLink =
       notification.link ||
-      notification.metadata?.link ||
-      (notification.metadata?.order_id
-        ? `/order/${notification.metadata.order_id}`
+      (notification.metadata as Record<string, any>)?.link ||
+      ((notification.metadata as Record<string, any>)?.order_id
+        ? `/order/${(notification.metadata as Record<string, any>).order_id}`
         : null) ||
       notification.body?.match(/\/order\/[a-zA-Z0-9-]+/)?.[0] ||
       "/orders";

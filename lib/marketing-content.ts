@@ -35,7 +35,7 @@ export const heroSpecial = {
   dish: 'Prawn Biryani',
   cook: 'Shanti',
   image: { src: '/marketing/dish-1.jpg', alt: 'A bowl of freshly cooked prawn biryani' },
-  garnish: { src: '/marketing/dish-4.jpg', alt: '' },
+  garnish: { src: '/marketing/dish-2.jpg', alt: '' },
 }
 
 export const trustRibbon = [
@@ -63,14 +63,14 @@ export const packaging = {
   benefits:
     'Every TESTIO order travels in areca-leaf and moulded-fibre containers — sturdy enough for gravy, warm enough to arrive fresh, and gentle enough to return to the soil they came from.',
   features: [
-    { label: '100% Natural', icon: 'leaf' as const },
-    { label: 'Biodegradable', icon: 'recycle' as const },
-    { label: 'Chemical Free', icon: 'flask' as const },
-    { label: 'Food Safe', icon: 'utensils' as const },
-    { label: 'Leaf Based', icon: 'sprout' as const },
-    { label: 'Sustainable', icon: 'globe' as const },
-    { label: 'Reusable', icon: 'refresh' as const },
-  ],
+    { label: '100% Natural', icon: 'leaf' },
+    { label: 'Biodegradable', icon: 'recycle' },
+    { label: 'Chemical Free', icon: 'flask' },
+    { label: 'Food Safe', icon: 'utensils' },
+    { label: 'Leaf Based', icon: 'sprout' },
+    { label: 'Sustainable', icon: 'globe' },
+    { label: 'Reusable', icon: 'refresh' },
+  ] as const satisfies readonly { label: string; icon: PackagingIconName }[],
   cta: { label: 'Order in eco packaging', href: '/explore' },
 }
 
@@ -121,14 +121,14 @@ export const ambassador = {
   // Null until a real, attributable quote is confirmed. Attributing an
   // invented quote to a real athlete is not acceptable. The section omits
   // the blockquote entirely while this is null.
-  quote: "Champions are built with discipline, and every great performance begins with honest food.",
+  quote: null,
   medalsCaption: 'Medals earned on real, home-cooked food.',
   cta: { label: 'Fuel Like a Champion', href: '/explore' },
   images: {
     cutout: '/marketing/ambassador-cutout.png',
     medals: '/marketing/honor.png',
-    portrait1: '/marketing/BA-competition.jpg',
-    portrait2: '/marketing/BA-triumphs.jpg',
+    portrait1: '/marketing/BA-1-Photoroom.png',
+    portrait2: '/marketing/IMG_6689-Photoroom.png',
   },
 }
 

@@ -12,8 +12,8 @@ const ICONS = {
 // so it lands above the fold and travels with the pinned section.
 export function TrustRibbon() {
   return (
-    <div data-ink aria-label="Why TESTIO" className="w-full bg-green-deep">
-      <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-5 px-4 py-5 md:grid-cols-4 md:gap-x-6 md:py-6">
+    <div data-ink className="w-full bg-green-deep">
+      <ul aria-label="Why TESTIO" className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-5 px-4 py-5 md:grid-cols-4 md:gap-x-6 md:py-6">
         {trustRibbon.map((item) => {
           const Icon = ICONS[item.icon]
           return (

@@ -70,14 +70,8 @@ export default function EditAddressPage() {
         finalIsDefault = true;
       }
 
-      if (finalIsDefault) {
-        const { error: clearError } = await supabase
-          .from("customer_addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id);
-        if (clearError) throw clearError;
-      }
-
+      // Update the target address first to ensure we never leave the user without a default
+      // if a network failure happens mid-flow.
       const { error } = await supabase
         .from("customer_addresses")
         .update({
@@ -89,6 +83,20 @@ export default function EditAddressPage() {
         })
         .eq("id", id);
       if (error) throw error;
+
+      // Only clear other defaults if we actually changed this address TO default.
+      // This avoids the unnecessary bulk clear if it was already default.
+      if (finalIsDefault && !existing?.is_default) {
+        const { error: clearError } = await supabase
+          .from("customer_addresses")
+          .update({ is_default: false })
+          .eq("user_id", user.id)
+          .neq("id", id);
+        if (clearError) {
+          console.error("Failed to clear other default addresses:", clearError);
+          // We don't throw here because the main address update succeeded.
+        }
+      }
 
       toast.success("Address updated");
       router.push("/addresses");

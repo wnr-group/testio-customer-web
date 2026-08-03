@@ -51,7 +51,7 @@ export function PackagingShowcase() {
 
         <div className="mt-10 grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           {/* the visual is the section's hero element */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] shadow-float ring-1 ring-text-primary/5 sm:rounded-[32px]">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[--radius-frame] shadow-float ring-1 ring-text-primary/5 sm:rounded-[--radius-panel]">
             <Image
               src="/marketing/box.png"
               alt="Testio Eco-friendly Packaging"

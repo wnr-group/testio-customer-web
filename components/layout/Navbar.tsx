@@ -2,9 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, User, Menu } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
-import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/authStore";
+import { createClient } from "@/lib/supabase/client";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/Logo";
 import {
   Sheet,
@@ -23,6 +27,9 @@ export function Navbar() {
   const count = useCartStore((s) =>
     s.items.reduce((sum, item) => sum + item.qty, 0),
   );
+  const clearAuthStore = useAuthStore((s) => s.clear);
+  const router = useRouter();
+  const supabase = createClient();
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -56,22 +63,18 @@ export function Navbar() {
         {/* Right actions */}
         <div className="flex items-center gap-3">
           {/* Cart */}
-          <Link href="/cart" aria-label="Shopping Cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="size-5" />
-              {mounted && count > 0 && (
-                <span className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[red] text-[10px] font-bold text-white shadow-sm">
-                  {count > 99 ? "99+" : count}
-                </span>
-              )}
-            </Button>
+          <Link href="/cart" aria-label="Shopping Cart" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}>
+            <ShoppingCart className="size-5" />
+            {mounted && count > 0 && (
+              <span className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[red] text-[10px] font-bold text-white shadow-sm">
+                {count > 99 ? "99+" : count}
+              </span>
+            )}
           </Link>
 
           {/* Profile */}
-          <Link href="/profile" aria-label="User profile">
-            <Button variant="ghost" size="icon">
-              <User className="size-5" />
-            </Button>
+          <Link href="/profile" aria-label="User profile" className={buttonVariants({ variant: "ghost", size: "icon" })}>
+            <User className="size-5" />
           </Link>
 
           {/* Mobile menu drawer */}
@@ -93,47 +96,57 @@ export function Navbar() {
               <div className="flex flex-col justify-between h-[calc(100vh-80px)] pt-6">
                 {/* Navigation Links */}
                 <nav className="flex flex-col gap-4">
-                  <SheetClose>
-                    <Link
-                      href="/home"
-                      className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
-                    >
-                      Discover
-                    </Link>
+                  <SheetClose
+                    render={
+                      <Link
+                        href="/home"
+                        className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
+                      />
+                    }
+                  >
+                    Discover
                   </SheetClose>
 
-                  <SheetClose>
-                    <Link
-                      href="/orders"
-                      className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
-                    >
-                      My Orders
-                    </Link>
+                  <SheetClose
+                    render={
+                      <Link
+                        href="/orders"
+                        className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
+                      />
+                    }
+                  >
+                    My Orders
                   </SheetClose>
 
-                  <SheetClose>
-                    <Link
-                      href="/profile"
-                      className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
-                    >
-                      Profile
-                    </Link>
+                  <SheetClose
+                    render={
+                      <Link
+                        href="/profile"
+                        className="block text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
+                      />
+                    }
+                  >
+                    Profile
                   </SheetClose>
                 </nav>
 
                 {/* Logout Action at Bottom */}
                 <div className="border-t border-[--color-border-color] pt-4">
-                  <SheetClose>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => {
-                        console.log("Logging out...");
-                      }}
-                    >
-                      <LogOut className="size-5" />
-                      <span className="font-medium">Logout</span>
-                    </Button>
+                  <SheetClose
+                    render={
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={async () => {
+                          await supabase.auth.signOut();
+                          clearAuthStore();
+                          router.push("/");
+                        }}
+                      />
+                    }
+                  >
+                    <LogOut className="size-5" />
+                    <span className="font-medium">Logout</span>
                   </SheetClose>
                 </div>
               </div>

@@ -73,19 +73,20 @@ export function HowItWorks() {
         {/* Phone frame with real app screenshots */}
         <div className="relative mx-auto hidden aspect-[9/19] w-64 md:block lg:w-72">
           <div className="absolute inset-0 rounded-[2.8rem] border-[10px] border-[#1A1A1A] bg-[#1A1A1A] shadow-2xl">
-            <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#1A1A1A]" />
             <div className="relative h-full w-full overflow-hidden rounded-[2.2rem] bg-white">
-              {howItWorks.steps.map((step) => (
-                <Image
-                  key={step.screen}
-                  data-screen
-                  src={step.screen}
-                  alt={`TESTIO app — ${step.title}`}
-                  fill
-                  sizes="288px"
-                  className="object-cover object-top"
-                />
-              ))}
+              <div className="absolute inset-x-0 bottom-0 top-6">
+                {howItWorks.steps.map((step) => (
+                  <Image
+                    key={step.screen}
+                    data-screen
+                    src={step.screen}
+                    alt={`TESTIO app — ${step.title}`}
+                    fill
+                    sizes="288px"
+                    className="object-cover object-top"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

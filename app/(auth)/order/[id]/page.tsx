@@ -86,7 +86,7 @@ export default function OrderDetailPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        if (isMounted) router.push("/login");
         return;
       }
 

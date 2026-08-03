@@ -4,7 +4,7 @@
 import { chromium, firefox, webkit } from 'playwright'
 import { mkdir } from 'node:fs/promises'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:3000'
+const BASE = process.env.BASE_URL ?? 'http://localhost:3001'
 const outDir = process.argv[2] ?? 'artifacts/visual/current'
 const only = process.argv[3]
 
@@ -42,6 +42,7 @@ for (const [name, { launcher, options }] of Object.entries(ENGINES)) {
     browser = await launcher.launch(options)
   } catch (err) {
     console.warn(`skip ${name}: ${err.message.split('\n')[0]}`)
+    if (only) process.exit(1)
     continue
   }
   const dir = `${outDir}/${name}`

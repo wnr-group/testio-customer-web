@@ -92,7 +92,7 @@ export interface DeliveryAssignmentRow {
 }
 
 export function useRealtimeDeliveryAssignment(orderId: string) {
-  const [assignment, setAssignment] = useState<DeliveryAssignmentRow | null>(null)
+  const [assignment, setAssignment] = useState<DeliveryAssignmentRow | null | undefined>(undefined)
   const supabase = createClient()
 
   useEffect(() => {
@@ -123,7 +123,12 @@ export function useRealtimeDeliveryAssignment(orderId: string) {
             .select('status, otp_code')
             .eq('order_id', orderId)
             .maybeSingle()
-          if (data) setAssignment(data as DeliveryAssignmentRow)
+          
+          setAssignment((prev) => {
+            // Ignore the fetch result if a realtime event already updated the state
+            if (prev !== undefined) return prev
+            return data ? (data as DeliveryAssignmentRow) : null
+          })
         }
       })
 
@@ -138,7 +143,7 @@ export function useRealtimeDeliveryAssignment(orderId: string) {
 
 Notes on why this shape:
 - `event: '*'` (not just `'UPDATE'` like `useRealtimeOrder`) because the assignment row is `INSERT`ed when a partner accepts/is broadcast the delivery (with `otp_code` already set at that point, per `accept-order/index.ts:70-84` and `broadcast-delivery/index.ts:69-83` in the sibling repo) and then `UPDATE`d as `status` moves `assigned → picked_up → delivered`. Missing `INSERT` would mean the OTP never appears until some unrelated update touched the row.
-- This hook intentionally does **not** do an initial fetch — exactly like `useRealtimeOrder`, it only reports live changes; Task 2 does the initial fetch as part of the page's existing `load()` function, matching the codebase's established split (page owns initial GET, hook owns realtime deltas).
+- This hook performs an initial delivery-assignment fetch and also refreshes the assignment when the realtime channel reaches SUBSCRIBED, setting the state to `null` if no assignment exists.
 
 - [ ] **Step 2: Typecheck**
 

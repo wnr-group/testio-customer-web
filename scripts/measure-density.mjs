@@ -3,14 +3,23 @@
 // Exits 1 with a reason list if any gate fails.
 import { chromium } from 'playwright'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:3000'
-const width = Number(process.argv[2] ?? 1440)
-const height = Number(process.argv[3] ?? 900)
+const BASE = process.env.BASE_URL ?? 'http://localhost:3001'
+const widthStr = process.argv[2] ?? '1440'
+const heightStr = process.argv[3] ?? '900'
+const width = Number(widthStr)
+const height = Number(heightStr)
+
+if (isNaN(width) || isNaN(height)) {
+  console.error('Usage: node scripts/measure-density.mjs [width] [height]\nWidth and height must be numeric values.')
+  process.exit(1)
+}
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width, height } })
-await page.emulateMedia({ reducedMotion: 'reduce' })
-await page.goto(BASE, { waitUntil: 'networkidle' })
+try {
+  const page = await browser.newPage({ viewport: { width, height } })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(BASE)
+  await page.waitForSelector('[data-hero-section]')
 
 const hero = await page.evaluate(() => {
   const section = document.querySelector('[data-hero-section]')
@@ -102,40 +111,43 @@ console.log(`viewport ${width}x${height}`)
 console.log('HERO      ', JSON.stringify(hero, null, 2))
 console.log('AMBASSADOR', JSON.stringify(amb, null, 2))
 
-const fails = []
-if (!hero) {
-  fails.push('hero not measurable — [data-hero-section] missing')
-} else {
-  if (!hero.fitsAboveFold)
-    fails.push(`hero ${hero.sectionHeight}px > viewport ${hero.viewportHeight}px — trust ribbon is below the fold`)
-  if (hero.coveragePct < 78) fails.push(`hero coverage ${hero.coveragePct}% < 78%`)
-  if (hero.largestEmptySquarePx > 180)
-    fails.push(`largest empty block ${hero.largestEmptySquarePx}px > 180px`)
-  for (const [k, v] of Object.entries(hero.quadrants))
-    if (v < 35) fails.push(`quadrant ${k} only ${v}% covered (min 35%)`)
-}
-if (!amb) {
-  fails.push('ambassador not measurable — [data-ambassador-section] missing')
-} else {
-  if (amb.athleteHeightPct < 70 || amb.athleteHeightPct > 80)
-    fails.push(`athlete height ${amb.athleteHeightPct}% outside 70-80%`)
-  if (amb.bottomGapPx > 24) fails.push(`athlete floats ${amb.bottomGapPx}px above section bottom (max 24px)`)
-  if (width >= 1024) {
-    if (amb.contentColPct < 40 || amb.contentColPct > 45)
-      fails.push(`content column ${amb.contentColPct}% outside 40-45%`)
-    if (amb.imageColPct < 55 || amb.imageColPct > 60)
-      fails.push(`image column ${amb.imageColPct}% outside 55-60%`)
-    if (amb.rightGapPct > 15)
-      fails.push(`empty strip right of the stage is ${amb.rightGapPct}% of section width (max 15%)`)
-    if (amb.midGapPct > 15)
-      fails.push(`empty gutter between copy and stage is ${amb.midGapPct}% of section width (max 15%)`)
+  const fails = []
+  if (!hero) {
+    fails.push('hero not measurable — [data-hero-section] missing')
+  } else {
+    if (!hero.fitsAboveFold)
+      fails.push(`hero ${hero.sectionHeight}px > viewport ${hero.viewportHeight}px — trust ribbon is below the fold`)
+    if (hero.coveragePct < 78) fails.push(`hero coverage ${hero.coveragePct}% < 78%`)
+    if (hero.largestEmptySquarePx > 180)
+      fails.push(`largest empty block ${hero.largestEmptySquarePx}px > 180px`)
+    for (const [k, v] of Object.entries(hero.quadrants))
+      if (v < 35) fails.push(`quadrant ${k} only ${v}% covered (min 35%)`)
   }
-}
+  if (!amb) {
+    fails.push('ambassador not measurable — [data-ambassador-section] missing')
+  } else {
+    if (amb.athleteHeightPct < 70 || amb.athleteHeightPct > 80)
+      fails.push(`athlete height ${amb.athleteHeightPct}% outside 70-80%`)
+    if (amb.bottomGapPx > 24) fails.push(`athlete floats ${amb.bottomGapPx}px above section bottom (max 24px)`)
+    if (width >= 1024) {
+      if (amb.contentColPct < 40 || amb.contentColPct > 45)
+        fails.push(`content column ${amb.contentColPct}% outside 40-45%`)
+      if (amb.imageColPct < 55 || amb.imageColPct > 60)
+        fails.push(`image column ${amb.imageColPct}% outside 55-60%`)
+      if (amb.rightGapPct > 15)
+        fails.push(`empty strip right of the stage is ${amb.rightGapPct}% of section width (max 15%)`)
+      if (amb.midGapPct > 15)
+        fails.push(`empty gutter between copy and stage is ${amb.midGapPct}% of section width (max 15%)`)
+    }
+  }
 
-await browser.close()
-if (fails.length) {
-  console.error('\nGATE FAILED:')
-  for (const f of fails) console.error(' -', f)
-  process.exit(1)
+  if (fails.length) {
+    console.error('\nGATE FAILED:')
+    for (const f of fails) console.error(' -', f)
+    process.exitCode = 1
+  } else {
+    console.log('\nGATE PASSED')
+  }
+} finally {
+  await browser.close()
 }
-console.log('\nGATE PASSED')
