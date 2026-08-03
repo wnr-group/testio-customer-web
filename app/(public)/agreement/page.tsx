@@ -1,3 +1,9 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+
 const SECTIONS = [
   {
     title: "1. Acceptance of Terms",
@@ -42,9 +48,21 @@ const SECTIONS = [
 ];
 
 export default function AgreementPage() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-[#FAF8F8] py-10 px-4">
       <div className="mx-auto max-w-2xl">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="mb-4 text-slate-600 hover:text-slate-900 -ml-2 rounded-xl font-semibold"
+        >
+          <ChevronLeft className="size-4 mr-1" />
+          Back
+        </Button>
+
         <h1 className="text-3xl font-extrabold text-[#091A36] tracking-tight">
           Terms &amp; Agreement
         </h1>
