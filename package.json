@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "visual:capture": "node scripts/visual-capture.mjs",
+    "visual:measure": "node scripts/measure-density.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -35,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
