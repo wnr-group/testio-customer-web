@@ -65,6 +65,12 @@ export default function EditAddressPage() {
         return;
       }
 
+      // If the user is explicitly making this the new default, clear all others first.
+      // If they unchecked the default toggle but this was already the default, keep it
+      // as default to avoid leaving every address without one.
+      const wasAlreadyDefault = existing?.is_default ?? false;
+      const resolvedIsDefault = picked.isDefault || (!picked.isDefault && wasAlreadyDefault);
+
       if (picked.isDefault) {
         const { error: clearError } = await supabase
           .from("customer_addresses")
@@ -80,7 +86,7 @@ export default function EditAddressPage() {
           address_line: picked.address,
           lat: picked.lat,
           lng: picked.lng,
-          is_default: picked.isDefault,
+          is_default: resolvedIsDefault,
         })
         .eq("id", id);
       if (error) throw error;

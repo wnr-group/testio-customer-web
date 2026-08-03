@@ -31,7 +31,6 @@ type Props = {
 
 const LABELS = ['Home', 'Work', 'Other']
 
-<<<<<<< HEAD
 export default function LocationPicker({ open, initialCenter, onClose, onConfirm, saving, initialLabel, initialAddress, initialIsDefault }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
@@ -44,25 +43,6 @@ export default function LocationPicker({ open, initialCenter, onClose, onConfirm
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PlaceResult[]>([])
   const [geocoding, setGeocoding] = useState(false)
-=======
-export default function LocationPicker({
-  open,
-  initialCenter,
-  onClose,
-  onConfirm,
-  saving,
-}: Props) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-
-  const [coords, setCoords] = useState(initialCenter);
-  const [address, setAddress] = useState("");
-  const [label, setLabel] = useState("Home");
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<PlaceResult[]>([]);
-  const [geocoding, setGeocoding] = useState(false);
->>>>>>> 62cdac52427bea5680f551ccf058b2551e365a88
 
   // Initialise the map + draggable pin when the picker opens.
   useEffect(() => {
@@ -100,13 +80,9 @@ export default function LocationPicker({
     });
     map.on("load", () => map.resize());
 
-<<<<<<< HEAD
     if (!initialAddress) {
       void updateFromLngLat(initialCenter.lng, initialCenter.lat)
     }
-=======
-    void updateFromLngLat(initialCenter.lng, initialCenter.lat);
->>>>>>> 62cdac52427bea5680f551ccf058b2551e365a88
 
     return () => {
       map.remove();
@@ -260,13 +236,7 @@ export default function LocationPicker({
         {/* Confirm */}
         <div className="px-5 py-4 mt-2">
           <Button
-<<<<<<< HEAD
             onClick={() => onConfirm({ lat: coords.lat, lng: coords.lng, label, address, isDefault })}
-=======
-            onClick={() =>
-              onConfirm({ lat: coords.lat, lng: coords.lng, label, address })
-            }
->>>>>>> 62cdac52427bea5680f551ccf058b2551e365a88
             disabled={!address || geocoding || saving}
             className="w-full bg-[#E8202A] hover:bg-[#c71821] text-white rounded-xl h-11 font-bold"
           >

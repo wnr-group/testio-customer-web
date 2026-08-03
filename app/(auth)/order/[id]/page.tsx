@@ -76,7 +76,14 @@ export default function OrderDetailPage() {
   const { status: liveStatus } = useRealtimeOrder(id);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
+      // Reset cook-phone state immediately so a stale value from a previous
+      // order never flickers into view while the new fetch is in flight.
+      setCookPhone(null);
+      setCookPhoneLoading(true);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -105,11 +112,13 @@ export default function OrderDetailPage() {
         "get_order_cook_phone",
         { p_order_id: id }
       );
-      if (phoneError) {
-        console.error("Fetch cook phone error:", phoneError);
+      if (!cancelled) {
+        if (phoneError) {
+          console.error("Fetch cook phone error:", phoneError);
+        }
+        setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+        setCookPhoneLoading(false);
       }
-      setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
-      setCookPhoneLoading(false);
 
       const { data: itemsData } = await supabase
         .from("order_items")
@@ -130,6 +139,7 @@ export default function OrderDetailPage() {
     }
 
     load();
+    return () => { cancelled = true; };
   }, [id, supabase, router]);
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";

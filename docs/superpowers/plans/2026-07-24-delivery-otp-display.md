@@ -98,6 +98,9 @@ export function useRealtimeDeliveryAssignment(orderId: string) {
   useEffect(() => {
     if (!orderId) return
 
+    // Establish the channel BEFORE the initial fetch so no INSERT/UPDATE fires
+    // into the gap between fetch-start and subscribe. On SUBSCRIBED (and after
+    // any reconnect), trigger a fresh fetch to close the race window.
     const channel = supabase
       .channel(`delivery-assignment-${orderId}`)
       .on(
@@ -116,7 +119,17 @@ export function useRealtimeDeliveryAssignment(orderId: string) {
           setAssignment(payload.new as DeliveryAssignmentRow)
         }
       )
-      .subscribe()
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Re-fetch on every successful (re)connect to close the race window.
+          const { data } = await supabase
+            .from('delivery_assignments')
+            .select('status, otp_code')
+            .eq('order_id', orderId)
+            .maybeSingle()
+          setAssignment(data as DeliveryAssignmentRow | null)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -198,16 +211,28 @@ add:
 
 ```ts
 
+      // Clear any stale assignment at the start of each load so a previous
+      // order's data never persists while the new fetch is in flight.
+      setAssignment(null);
+
+      let isMounted = true; // defined here so cleanup below can set it false
+
       const { data: assignmentData, error: assignmentError } = await supabase
         .from("delivery_assignments")
         .select("status, otp_code")
         .eq("order_id", id)
         .maybeSingle();
+
       if (assignmentError) {
         console.error("Fetch delivery assignment error:", assignmentError);
-      } else if (isMounted) {
-        setAssignment(assignmentData as DeliveryAssignmentRow | null);
+        // Leave assignment as null (already cleared above).
+      } else if (assignmentData && isMounted) {
+        setAssignment(assignmentData as DeliveryAssignmentRow);
       }
+      // assignmentData === null: no assignment yet — null is already set, so no-op.
+
+      // Cleanup (add to the existing effect cleanup return):
+      // return () => { isMounted = false; ... }
 ```
 
 `.maybeSingle()` (not `.single()`) is required here — pickup orders, and delivery orders before broadcast, will have zero matching rows, which `.single()` treats as an error but `.maybeSingle()` returns as `null` cleanly (this mirrors the existing `reviews` lookup two blocks below at `page.tsx:137-141`, which also uses `.maybeSingle()` for the same "may legitimately not exist yet" reason).
@@ -350,14 +375,22 @@ Immediately after the existing `const { status: liveStatus } = useRealtimeOrder(
 Immediately after the existing `const currentStatus: OrderStatus = ...` line (currently `page.tsx:157`), add the merged assignment and the visibility gate:
 
 ```ts
-  const currentAssignment = liveAssignment ?? assignment;
+  // Distinguish "no realtime event yet" (undefined) from an explicit DELETE
+  // (null). Once liveAssignment is non-undefined, realtime is authoritative
+  // and we no longer fall back to the fetched value, so a DELETE is permanent.
+  const REALTIME_NOT_YET = undefined as DeliveryAssignmentRow | null | undefined;
+  const currentAssignment =
+    liveAssignment !== REALTIME_NOT_YET ? liveAssignment : assignment;
+
   const showDeliveryOtp =
     order != null &&
     order.delivery_type === "delivery" &&
     !!currentAssignment?.otp_code &&
     (currentAssignment.status === "assigned" || currentAssignment.status === "picked_up") &&
     currentStatus !== "cancelled" &&
-    currentStatus !== "rejected";
+    currentStatus !== "rejected" &&
+    currentStatus !== "delivered" &&
+    currentStatus !== "completed";
 ```
 
 This is evaluated on every render (cheap boolean derivation, same pattern as the existing `canCancel` on the next line) — no extra state, no extra effect.
