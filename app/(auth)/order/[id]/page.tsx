@@ -94,12 +94,26 @@ export default function OrderDetailPage() {
   const { assignment: liveAssignment } = useRealtimeDeliveryAssignment(id);
 
   useEffect(() => {
+<<<<<<< HEAD
     let isMounted = true;
+=======
+    let cancelled = false;
+>>>>>>> origin/main
 
     async function load() {
+      // Reset all order-related state immediately so stale values from a
+      // previous order never persist while the new fetch is in flight.
+      setOrder(null);
+      setItems([]);
+      setHasReview(false);
+      setLoading(true);
+      setCookPhone(null);
+      setCookPhoneLoading(true);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (cancelled) return;
       if (!user) {
         router.push("/login");
         return;
@@ -114,6 +128,7 @@ export default function OrderDetailPage() {
         .eq("id", id)
         .single();
 
+      if (cancelled) return;
       if (orderError || !orderData) {
         toast.error("Order not found");
         router.push("/orders");
@@ -121,6 +136,7 @@ export default function OrderDetailPage() {
       }
       setOrder(orderData as unknown as OrderRow);
 
+<<<<<<< HEAD
       // Runs independently of the main load flow so setLoading(false) below
       // doesn't wait on it — the button has its own cookPhoneLoading state.
       supabase
@@ -133,11 +149,25 @@ export default function OrderDetailPage() {
           setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
           setCookPhoneLoading(false);
         });
+=======
+      const { data: phoneData, error: phoneError } = await supabase.rpc(
+        "get_order_cook_phone",
+        { p_order_id: id }
+      );
+      if (!cancelled) {
+        if (phoneError) {
+          console.error("Fetch cook phone error:", phoneError);
+        }
+        setCookPhone(typeof phoneData === "string" && phoneData.trim() ? phoneData : null);
+        setCookPhoneLoading(false);
+      }
+>>>>>>> origin/main
 
       const { data: itemsData } = await supabase
         .from("order_items")
         .select("id, quantity, unit_price, total_price, dishes ( name, image_url )")
         .eq("order_id", id);
+      if (cancelled) return;
       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
 
       const { data: assignmentData, error: assignmentError } = await supabase
@@ -157,19 +187,29 @@ export default function OrderDetailPage() {
           .select("id")
           .eq("order_id", id)
           .maybeSingle();
+<<<<<<< HEAD
         if (isMounted) setHasReview(!!reviewData);
+=======
+        if (cancelled) return;
+        setHasReview(!!reviewData);
+>>>>>>> origin/main
       }
 
       if (isMounted) setLoading(false);
     }
 
     load();
+<<<<<<< HEAD
 
     return () => {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+=======
+    return () => { cancelled = true; };
+  }, [id, supabase, router]);
+>>>>>>> origin/main
 
   const currentStatus: OrderStatus = (liveStatus ?? (order?.status as OrderStatus)) || "pending";
   const currentAssignment = liveAssignment ?? assignment;
