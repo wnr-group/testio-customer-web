@@ -6,6 +6,8 @@
 
 import { useRef } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { gsap, useGSAP } from '@/lib/gsap'
 import { ambassador } from '@/lib/marketing-content'
 
@@ -55,45 +57,108 @@ export function AmbassadorSection() {
   )
 
   return (
-    <section ref={ref} className="relative overflow-hidden bg-[#191210] px-4 py-24 text-white">
-      {/* red brand arc behind the cut-out */}
+    <section
+      ref={ref}
+      data-ambassador-section
+      className="relative flex min-h-[min(96svh,57rem)] items-stretch overflow-hidden bg-ink-deep px-4 pt-section text-paper lg:pt-section-lg"
+    >
+      {/* layered backdrop — gradient + glow + texture, never a flat canvas */}
       <div
         aria-hidden
-        className="absolute -right-40 top-1/2 h-[620px] w-[620px] -translate-y-1/2 rounded-full bg-[#E8202A] opacity-90 md:-right-24"
+        className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,var(--color-ink-warm)_0%,var(--color-ink-deep)_55%,#120C0B_100%)]"
       />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-        <div data-amb-copy>
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F5A623]">
-            Our brand ambassador
+      <div
+        aria-hidden
+        className="absolute right-[-18%] top-1/2 hidden h-[70%] w-[60%] -translate-y-1/2 rounded-full bg-brand-primary/25 blur-3xl md:block"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.05] [background-image:radial-gradient(#fff_1px,transparent_1px)] [background-size:22px_22px]"
+      />
+
+      <div className="relative mx-auto grid w-full gap-10 md:items-end md:gap-8 lg:grid-cols-[minmax(0,42fr)_minmax(0,58fr)]">
+        {/* -------- left: copy → stats → polaroid → CTA -------- */}
+        <div data-amb-copy className="pb-12 lg:pb-16">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand-secondary">
+            {ambassador.eyebrow}
           </p>
           <h2 className="mt-4 text-4xl font-extrabold tracking-tight md:text-5xl">
             {ambassador.heading}
           </h2>
           {ambassador.name && (
-            <p className="mt-3 text-lg font-bold text-[#F5A623]">{ambassador.name}</p>
+            <p className="mt-3 text-lg font-bold text-brand-secondary">{ambassador.name}</p>
           )}
-          <p className="mt-2 text-sm font-semibold text-white/80">{ambassador.title}</p>
-          <p className="mt-5 max-w-md text-sm leading-relaxed text-white/70">{ambassador.body}</p>
-          <figure data-amb-polaroid className="mt-10 w-56 -rotate-3 bg-white p-3 pb-4 shadow-2xl">
+          <p className="mt-2 text-sm font-semibold text-paper/80">{ambassador.title}</p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-paper/75">{ambassador.body}</p>
+
+          <dl className="mt-7 flex flex-wrap gap-x-8 gap-y-5 border-y border-paper/10 py-5">
+            {ambassador.stats.map((stat) => (
+              <div key={stat.label}>
+                <dt className="sr-only">{stat.label}</dt>
+                <dd>
+                  <span className="block text-2xl font-extrabold text-brand-secondary">
+                    {stat.value}
+                  </span>
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-paper/70">
+                    {stat.label}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          {ambassador.quote && (
+            <blockquote className="mt-6 border-l-2 border-brand-primary pl-4 text-sm italic leading-relaxed text-paper/75">
+              {ambassador.quote}
+            </blockquote>
+          )}
+
+          <figure
+            data-amb-polaroid
+            className="mt-7 w-40 -rotate-3 bg-paper p-2.5 pb-3 shadow-float sm:w-48 sm:p-3 sm:pb-4"
+          >
             <Image
               src={ambassador.images.medals}
-              alt="Medals and trophies"
+              alt="Medals and trophies won by the TESTIO brand ambassador"
               width={448}
               height={560}
+              sizes="(min-width: 640px) 192px, 160px"
               className="aspect-[4/5] w-full object-cover object-top"
             />
-            <figcaption className="mt-2 text-center text-[11px] font-semibold text-[#1A1A1A]/70">
+            <figcaption className="mt-2 text-center text-[11px] font-semibold text-text-primary/70">
               {ambassador.medalsCaption}
             </figcaption>
           </figure>
+
+          <Link
+            href={ambassador.cta.href}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-brand-primary px-7 py-3.5 text-sm font-bold text-paper shadow-float transition-colors hover:bg-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-secondary"
+          >
+            {ambassador.cta.label}
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
         </div>
-        <div data-amb-cutout className="relative mx-auto w-full max-w-sm md:max-w-md">
+
+        {/* -------- right: athlete, planted on a stage -------- */}
+        <div data-amb-cutout className="relative flex items-end justify-center lg:justify-end">
+          {/* stage: a bottom-anchored panel she stands on, not a floating circle */}
+          <div
+            data-amb-stage
+            aria-hidden
+            className="absolute bottom-0 left-1/2 h-[86%] w-[88%] -translate-x-1/2 rounded-t-full bg-gradient-to-b from-brand-primary via-red-deep to-red-shadow lg:left-auto lg:right-0 lg:w-[92%] lg:translate-x-0"
+          />
+          {/* contact shadow so she is planted, not hovering */}
+          <div
+            aria-hidden
+            className="absolute bottom-1 left-1/2 h-6 w-[62%] -translate-x-1/2 rounded-full bg-black/45 blur-xl lg:left-auto lg:right-[12%] lg:translate-x-0"
+          />
           <Image
             src={ambassador.images.cutout}
             alt={ambassador.name ?? 'TESTIO brand ambassador'}
             width={640}
             height={800}
-            className="relative z-10 w-full object-contain drop-shadow-2xl"
+            sizes="(min-width: 1280px) 460px, (min-width: 768px) 40vw, 78vw"
+            className="relative z-10 h-[clamp(20rem,77svh,44rem)] w-auto object-contain object-bottom drop-shadow-cutout"
           />
         </div>
       </div>
