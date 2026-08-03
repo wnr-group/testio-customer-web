@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,17 @@ interface DeliveryOtpCardProps {
 export default function DeliveryOtpCard({ otp }: DeliveryOtpCardProps) {
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(otp);
       setCopied(true);
       toast.success("OTP copied");
-      window.setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Couldn't copy OTP");
     }
@@ -33,7 +38,10 @@ export default function DeliveryOtpCard({ otp }: DeliveryOtpCardProps) {
         </p>
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-2xl font-extrabold text-[#D61A22] tracking-[0.35em] tabular-nums">
+        <span
+          className="text-2xl font-extrabold text-[#D61A22] tracking-[0.35em] tabular-nums"
+          aria-live="polite"
+        >
           {otp}
         </span>
         <Button

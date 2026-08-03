@@ -94,6 +94,8 @@ export default function OrderDetailPage() {
   const { assignment: liveAssignment } = useRealtimeDeliveryAssignment(id);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function load() {
       const {
         data: { user },
@@ -161,7 +163,6 @@ export default function OrderDetailPage() {
       if (isMounted) setLoading(false);
     }
 
-    let isMounted = true;
     load();
 
     return () => {
@@ -291,7 +292,9 @@ export default function OrderDetailPage() {
         )}
 
         {/* Delivery OTP — only while a partner is actively assigned/en route */}
-        {showDeliveryOtp && <DeliveryOtpCard otp={currentAssignment!.otp_code!} />}
+        {showDeliveryOtp && currentAssignment?.otp_code && (
+          <DeliveryOtpCard otp={currentAssignment.otp_code} />
+        )}
 
         {/* Cook Info Card */}
         <Card className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
