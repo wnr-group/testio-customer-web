@@ -79,14 +79,19 @@ export default function OrderDetailPage() {
     let cancelled = false;
 
     async function load() {
-      // Reset cook-phone state immediately so a stale value from a previous
-      // order never flickers into view while the new fetch is in flight.
+      // Reset all order-related state immediately so stale values from a
+      // previous order never persist while the new fetch is in flight.
+      setOrder(null);
+      setItems([]);
+      setHasReview(false);
+      setLoading(true);
       setCookPhone(null);
       setCookPhoneLoading(true);
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (cancelled) return;
       if (!user) {
         router.push("/login");
         return;
@@ -101,6 +106,7 @@ export default function OrderDetailPage() {
         .eq("id", id)
         .single();
 
+      if (cancelled) return;
       if (orderError || !orderData) {
         toast.error("Order not found");
         router.push("/orders");
@@ -124,6 +130,7 @@ export default function OrderDetailPage() {
         .from("order_items")
         .select("id, quantity, unit_price, total_price, dishes ( name, image_url )")
         .eq("order_id", id);
+      if (cancelled) return;
       setItems((itemsData as unknown as OrderItemRow[]) ?? []);
 
       if (orderData.status === "completed") {
@@ -132,6 +139,7 @@ export default function OrderDetailPage() {
           .select("id")
           .eq("order_id", id)
           .maybeSingle();
+        if (cancelled) return;
         setHasReview(!!reviewData);
       }
 
