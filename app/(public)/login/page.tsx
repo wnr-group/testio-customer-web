@@ -126,7 +126,7 @@ function LoginContent() {
           <div className="flex flex-col items-center gap-1.5 border-t border-slate-100 pt-4 text-center">
             <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
               <ShieldCheck className="h-3.5 w-3.5 text-[#E8202A]" />
-              Your number is safe, used only for login and order updates.
+              Your number is safe — used only for login and order updates.
             </p>
             <p className="text-xs text-slate-400">
               By continuing, you agree to our{" "}

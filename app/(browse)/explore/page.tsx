@@ -242,7 +242,7 @@ export default function ExplorePage() {
               <p className="text-lg font-bold text-[#1A1A1A]">
                 We&apos;re not cooking around {location.label} yet
               </p>
-              <p className="mt-1 text-sm text-[#666]">We&apos;re growing fast, try another area.</p>
+              <p className="mt-1 text-sm text-[#666]">We&apos;re growing fast — try another area.</p>
             </div>
           ) : viewMode === 'map' ? (
             <div className="relative aspect-[2/1] min-h-[400px] w-full overflow-hidden rounded-3xl border border-[#1A1A1A]/10 bg-white shadow-sm">
