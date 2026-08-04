@@ -232,7 +232,7 @@ for (let i = 0; i < 15; i++) {
 }
 
 // Also stress the mobile Sheet open/close if present at the current width.
-await page.setViewportSize({ width: 900, height: 900 })
+await page.setViewportSize({ width: 375, height: 900 })
 const trigger = page.locator('[data-touch-target="nav-hamburger"]')
 if ((await trigger.count()) > 0) {
   for (let i = 0; i < 5; i++) {
@@ -1617,7 +1617,7 @@ Expected: `17` (unchanged from both source branches).
 git rev-parse feat/redesginhomepage feat/mobileversion origin/feat/redesginhomepage origin/feat/mobileversion
 ```
 
-Expected: all four hashes identical to Task 1 Step 1 — neither backup branch moved at any point during this plan.
+Expected: local feat/redesginhomepage matches origin/feat/redesginhomepage and local feat/mobileversion matches origin/feat/mobileversion, while feat/mobileversion and feat/redesginhomepage remain distinct — neither backup branch moved at any point during this plan.
 
 - [ ] **Step 7: Record the verification report**
 

@@ -8,9 +8,10 @@
 // Mobile (<1024px): feat/mobileversion's mobile-optimized stacked hero art
 // with touch-friendly featured cards and trust ribbon.
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Play, Pause } from 'lucide-react'
 import { gsap, useGSAP, ScrollTrigger } from '@/lib/gsap'
 import { hero, heroFeatured, heroSpecial } from '@/lib/marketing-content'
 import { TrustRibbon } from '@/components/marketing/TrustRibbon'
@@ -20,6 +21,7 @@ export function Hero() {
   const ref = useRef<HTMLElement>(null)
   const desktopPinRef = useRef<HTMLDivElement>(null)
   const mobilePinRef = useRef<HTMLDivElement>(null)
+  const [isHeroScrollPaused, setIsHeroScrollPaused] = useState(false)
 
   useGSAP(
     () => {
@@ -372,13 +374,25 @@ export function Hero() {
               </div>
 
               <div data-hero-featured data-ink className="relative mt-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-text-primary/45">
-                  Featured in your area
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-text-primary/45">
+                    Featured in your area
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsHeroScrollPaused(!isHeroScrollPaused)}
+                    aria-label={isHeroScrollPaused ? 'Play featured scroll' : 'Pause featured scroll'}
+                    aria-pressed={isHeroScrollPaused}
+                    className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-paper/80 px-2.5 py-0.5 text-xs font-medium text-text-secondary shadow-sm backdrop-blur hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary sm:hidden"
+                  >
+                    {isHeroScrollPaused ? <Play className="size-3" /> : <Pause className="size-3" />}
+                    <span>{isHeroScrollPaused ? 'Play' : 'Pause'}</span>
+                  </button>
+                </div>
 
                 {/* Mobile Auto-Scroll Motion Track */}
                 <div className="relative mt-4 overflow-hidden -mx-4 px-4 sm:hidden">
-                  <div className="flex w-max gap-6 animate-hero-featured-scroll">
+                  <div className={`flex w-max gap-6 animate-hero-featured-scroll ${isHeroScrollPaused ? 'is-paused' : ''}`}>
                     {[...heroFeatured, ...heroFeatured].map((item, index) => (
                       <div key={`${item.dish}-${index}`} className="group w-[9rem] min-w-[9rem] shrink-0">
                         <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-text-primary/5 transition-shadow duration-300 group-hover:shadow-float">

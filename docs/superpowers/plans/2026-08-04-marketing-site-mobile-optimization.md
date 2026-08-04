@@ -159,7 +159,7 @@ async function checkBodyText(browser) {
 
   const results = []
   for (const target of BODY_TEXT) {
-    const el = page.locator(target.selector).first()
+    const el = page.locator(`${target.selector}:visible`).first()
     if ((await el.count()) === 0) {
       results.push({ ...target, status: 'pending' })
       continue
@@ -220,7 +220,9 @@ try {
   const fails = [
     ...overflowFails,
     ...touchResults.filter((r) => r.status === 'fail').map((r) => `${r.name}: ${Math.round(r.box.width)}x${Math.round(r.box.height)}px < ${r.min}x${r.min}px`),
+    ...touchResults.filter((r) => r.status === 'pending').map((r) => `${r.name}: missing touch target selector`),
     ...bodyResults.filter((r) => r.status === 'fail').map((r) => `${r.name}: ${r.fontSize}px < 16px`),
+    ...bodyResults.filter((r) => r.status === 'pending').map((r) => `${r.name}: missing body text selector`),
     ...pinFails,
   ]
   if (fails.length) {
@@ -312,7 +314,7 @@ npm run verify:responsive
 
 Expected output (this is the real, measured baseline — verified live against this codebase before writing this plan):
 
-```
+```text
 OVERFLOW PASS (no horizontal scroll at any of the 10 breakpoints)
 TOUCH TARGETS [ 'hero-cta-primary@pending', 'hero-cta-secondary@pending', 'nav-login@pending', 'nav-hamburger@pending', 'nav-drawer-explore@pending', 'nav-drawer-become-cook@pending', 'nav-drawer-login@pending', 'kitchens-use-location@pending', 'kitchens-see-all@pending', 'location-search-input@pending', 'footer-link@pending' ]
 BODY TEXT >= 16px [ 'hero-sub@fail (12px)', 'packaging-benefits@pending', 'kitchens-sub@pending', 'becomecook-point@pending', 'howitworks-step-body@pending' ]
@@ -462,7 +464,7 @@ Line 122 currently reads:
 Run: `npm run verify:responsive`
 Expected:
 
-```
+```text
 TOUCH TARGETS [ 'hero-cta-primary@pass (648x48, needs 48)', 'hero-cta-secondary@pass (…x48, needs 48)', ... ]
 BODY TEXT >= 16px [ 'hero-sub@pass (16px)', ... ]
 ```
@@ -678,7 +680,7 @@ Notes on this diff:
 Run: `npm run verify:responsive`
 Expected:
 
-```
+```text
 TOUCH TARGETS [ ..., 'nav-login@pass (…x48, needs 48)', 'nav-hamburger@pass (48x48, needs 48)', 'nav-drawer-explore@pass (…, needs 48)', 'nav-drawer-become-cook@pass (…, needs 48)', 'nav-drawer-login@pass (…, needs 48)', ... ]
 ```
 
@@ -918,7 +920,7 @@ Change to (same manual-only note — requires a resolved `get_nearby_cooks` RPC 
 Run: `npm run verify:responsive`
 Expected:
 
-```
+```text
 TOUCH TARGETS [ ..., 'kitchens-use-location@pass (…x48, needs 48)', 'kitchens-see-all@pass (…x48, needs 48)', 'location-search-input@pass (…x52, needs 48)', ... ]
 BODY TEXT >= 16px [ ..., 'kitchens-sub@pass (16px)', ... ]
 ```
@@ -1137,7 +1139,7 @@ Change `min-h-screen` to `md:min-h-screen` (the forced full height now only appl
 Run: `npm run verify:responsive`
 Expected:
 
-```
+```text
 PIN GATING PASS
 ```
 
@@ -1396,13 +1398,16 @@ import('playwright').then(async ({ chromium }) => {
   const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: 375, height: 900 } })
   await page.goto('http://localhost:3001', { waitUntil: 'networkidle' })
-  await page.locator('[data-ambassador-section]').scrollIntoViewIfNeeded()
-  await page.waitForTimeout(300)
+  const mobileContainer = page.locator('[data-amb-mobile]')
+  if ((await mobileContainer.count()) > 0) {
+    await mobileContainer.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(300)
+  }
   const geo = await page.evaluate(() => {
-    const section = document.querySelector('[data-ambassador-section]')
-    const stage = document.querySelector('[data-amb-stage]')
-    const carousel = stage?.querySelector('.overflow-x-auto')
-    const s = section.getBoundingClientRect()
+    const mobileContainer = document.querySelector('[data-amb-mobile]')
+    const carousel = mobileContainer?.querySelector('.animate-amb-scroll') ?? mobileContainer?.querySelector('.overflow-hidden')
+    if (!mobileContainer || !carousel) return { carouselOverflowsSectionBy: 0 }
+    const s = mobileContainer.getBoundingClientRect()
     const c = carousel.getBoundingClientRect()
     return { carouselOverflowsSectionBy: Math.max(0, c.bottom - s.bottom) }
   })

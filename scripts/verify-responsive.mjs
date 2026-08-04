@@ -55,50 +55,65 @@ async function checkOverflow(browser) {
   return fails
 }
 
+const PHONE_WIDTHS = BREAKPOINTS.filter((w) => w < 640)
+const ALLOW_PENDING = process.argv.includes('--allow-pending')
+
 async function checkTouchTargets(browser) {
-  const page = await browser.newPage({ viewport: { width: 375, height: 900 } })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(BASE, { waitUntil: 'networkidle' })
-
-  const trigger = page.locator('[data-touch-target="nav-hamburger"]')
-  if ((await trigger.count()) > 0) {
-    await trigger.click()
-    await page.waitForTimeout(250)
-  }
-
   const results = []
-  for (const target of TOUCH_TARGETS) {
-    const el = page.locator(target.selector).first()
-    if ((await el.count()) === 0) {
-      results.push({ ...target, status: 'pending' })
-      continue
+  for (const width of PHONE_WIDTHS) {
+    const page = await browser.newPage({ viewport: { width, height: 900 } })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(BASE, { waitUntil: 'networkidle' })
+
+    const trigger = page.locator('[data-touch-target="nav-hamburger"]')
+    if ((await trigger.count()) > 0 && (await trigger.isVisible())) {
+      await trigger.click()
+      await page.waitForTimeout(250)
     }
-    const box = await el.boundingBox()
-    const min = target.minSize ?? 48
-    const pass = box && box.width >= min && box.height >= min
-    results.push({ ...target, status: pass ? 'pass' : 'fail', box, min })
+
+    for (const target of TOUCH_TARGETS) {
+      const el = page.locator(`${target.selector}:visible`).first()
+      if ((await el.count()) === 0) {
+        if (ALLOW_PENDING) {
+          results.push({ ...target, width, status: 'pending' })
+        } else {
+          results.push({ ...target, width, status: 'fail', reason: 'selector not found' })
+        }
+        continue
+      }
+      const box = await el.boundingBox()
+      const min = target.minSize ?? 48
+      const pass = box && box.width >= min && box.height >= min
+      results.push({ ...target, width, status: pass ? 'pass' : 'fail', box, min })
+    }
+    await page.close()
   }
-  await page.close()
   return results
 }
 
 async function checkBodyText(browser) {
-  const page = await browser.newPage({ viewport: { width: 375, height: 900 } })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(BASE, { waitUntil: 'networkidle' })
-
   const results = []
-  for (const target of BODY_TEXT) {
-    const el = page.locator(target.selector).first()
-    if ((await el.count()) === 0) {
-      results.push({ ...target, status: 'pending' })
-      continue
+  for (const width of PHONE_WIDTHS) {
+    const page = await browser.newPage({ viewport: { width, height: 900 } })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(BASE, { waitUntil: 'networkidle' })
+
+    for (const target of BODY_TEXT) {
+      const el = page.locator(`${target.selector}:visible`).first()
+      if ((await el.count()) === 0) {
+        if (ALLOW_PENDING) {
+          results.push({ ...target, width, status: 'pending' })
+        } else {
+          results.push({ ...target, width, status: 'fail', reason: 'selector not found' })
+        }
+        continue
+      }
+      await el.scrollIntoViewIfNeeded()
+      const fontSize = await el.evaluate((n) => parseFloat(getComputedStyle(n).fontSize))
+      results.push({ ...target, width, status: fontSize >= 16 ? 'pass' : 'fail', fontSize })
     }
-    await el.scrollIntoViewIfNeeded()
-    const fontSize = await el.evaluate((n) => parseFloat(getComputedStyle(n).fontSize))
-    results.push({ ...target, status: fontSize >= 16 ? 'pass' : 'fail', fontSize })
+    await page.close()
   }
-  await page.close()
   return results
 }
 
@@ -134,8 +149,9 @@ try {
   const pinFails = await checkPinGating(browser)
 
   const fmtTouch = (r) =>
-    `${r.name}@${r.status}${r.box ? ` (${Math.round(r.box.width)}x${Math.round(r.box.height)}, needs ${r.min})` : ''}`
-  const fmtBody = (r) => `${r.name}@${r.status}${r.fontSize ? ` (${r.fontSize}px)` : ''}`
+    `${r.name}@${r.width}px@${r.status}${r.box ? ` (${Math.round(r.box.width)}x${Math.round(r.box.height)}, needs ${r.min})` : r.reason ? ` (${r.reason})` : ''}`
+  const fmtBody = (r) =>
+    `${r.name}@${r.width}px@${r.status}${r.fontSize ? ` (${r.fontSize}px)` : r.reason ? ` (${r.reason})` : ''}`
 
   console.log('OVERFLOW', overflowFails.length ? overflowFails : 'PASS (no horizontal scroll at any of the 10 breakpoints)')
   console.log('TOUCH TARGETS', touchResults.map(fmtTouch))
@@ -149,8 +165,20 @@ try {
 
   const fails = [
     ...overflowFails,
-    ...touchResults.filter((r) => r.status === 'fail').map((r) => `${r.name}: ${Math.round(r.box.width)}x${Math.round(r.box.height)}px < ${r.min}x${r.min}px`),
-    ...bodyResults.filter((r) => r.status === 'fail').map((r) => `${r.name}: ${r.fontSize}px < 16px`),
+    ...touchResults
+      .filter((r) => r.status === 'fail')
+      .map((r) =>
+        r.box
+          ? `${r.width}px ${r.name}: ${Math.round(r.box.width)}x${Math.round(r.box.height)}px < ${r.min}x${r.min}px`
+          : `${r.width}px ${r.name}: ${r.reason ?? 'failed'}`
+      ),
+    ...bodyResults
+      .filter((r) => r.status === 'fail')
+      .map((r) =>
+        r.fontSize
+          ? `${r.width}px ${r.name}: ${r.fontSize}px < 16px`
+          : `${r.width}px ${r.name}: ${r.reason ?? 'failed'}`
+      ),
     ...pinFails,
   ]
   if (fails.length) {

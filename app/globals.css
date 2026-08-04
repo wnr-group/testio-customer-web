@@ -104,7 +104,7 @@ body {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-50% - 0.4375rem));
   }
 }
 
@@ -113,7 +113,9 @@ body {
 }
 
 .animate-amb-scroll:hover,
-.animate-amb-scroll:active {
+.animate-amb-scroll:active,
+.animate-amb-scroll.is-paused,
+.animate-amb-scroll[data-paused="true"] {
   animation-play-state: paused;
 }
 
@@ -128,7 +130,7 @@ body {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-50% - 0.75rem));
   }
 }
 
@@ -137,7 +139,9 @@ body {
 }
 
 .animate-hero-featured-scroll:hover,
-.animate-hero-featured-scroll:active {
+.animate-hero-featured-scroll:active,
+.animate-hero-featured-scroll.is-paused,
+.animate-hero-featured-scroll[data-paused="true"] {
   animation-play-state: paused;
 }
 

@@ -7,15 +7,16 @@
 // Mobile (<1024px): feat/mobileversion's mobile-optimized achievement
 // carousel and testimonial card.
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Quote } from 'lucide-react'
+import { ArrowRight, Quote, Play, Pause } from 'lucide-react'
 import { gsap, useGSAP, ScrollTrigger } from '@/lib/gsap'
 import { ambassador } from '@/lib/marketing-content'
 
 export function AmbassadorSection() {
   const ref = useRef<HTMLElement>(null)
+  const [isAmbassadorPaused, setIsAmbassadorPaused] = useState(false)
 
   useGSAP(
     () => {
@@ -438,8 +439,20 @@ export function AmbassadorSection() {
             </div>
 
             {/* Mobile Achievement Carousel */}
-            <div className="relative mt-4 z-30 flex w-full min-w-0 max-w-full overflow-hidden px-1 pt-3 pb-3">
-              <div className="flex w-max gap-3.5 animate-amb-scroll">
+            <div className="relative mt-4 z-30 flex w-full min-w-0 max-w-full flex-col overflow-hidden px-1 pt-3 pb-3">
+              <div className="flex items-center justify-end mb-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => setIsAmbassadorPaused(!isAmbassadorPaused)}
+                  aria-label={isAmbassadorPaused ? 'Play carousel' : 'Pause carousel'}
+                  aria-pressed={isAmbassadorPaused}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-xs font-semibold text-text-secondary shadow-sm backdrop-blur transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                >
+                  {isAmbassadorPaused ? <Play className="size-3.5" /> : <Pause className="size-3.5" />}
+                  <span>{isAmbassadorPaused ? 'Play' : 'Pause'}</span>
+                </button>
+              </div>
+              <div className={`flex w-max gap-3.5 animate-amb-scroll ${isAmbassadorPaused ? 'is-paused' : ''}`}>
                 <AchievementCard src={ambassador.images.portrait1} alt="Competition Portrait" title="Competition" />
                 <AchievementCard src={ambassador.images.medals} alt="Medal Ceremony" title="Honors" />
                 <AchievementCard src={ambassador.images.portrait2} alt="Trophy Collection" title="Triumphs" />
