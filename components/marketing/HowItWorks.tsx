@@ -23,30 +23,31 @@ export function HowItWorks() {
         const screens = Array.from(container.querySelectorAll<HTMLElement>('[data-screen]'))
         if (steps.length === 0 || screens.length === 0) return
 
-        gsap.set(steps.slice(1), { opacity: 0.25 })
+        gsap.set(steps.slice(1), { opacity: 0.5 })
         gsap.set(screens.slice(1), { autoAlpha: 0 })
 
         const tl = gsap.timeline({
           scrollTrigger: {
-            trigger: container,
+            trigger: pinRef.current,
             start: 'top top',
             end: '+=200%',
-            scrub: 0.4,
-            pin: pinRef.current,
+            scrub: true,
+            pin: true,
           },
         })
         steps.forEach((_, i) => {
           if (i === 0) return
-          tl.to(steps[i - 1], { opacity: 0.25, duration: 0.3 }, i)
+          tl.to(steps[i - 1], { opacity: 0.5, duration: 0.3 }, i)
             .to(steps[i], { opacity: 1, duration: 0.3 }, i)
             .to(screens[i - 1], { autoAlpha: 0, y: -16, duration: 0.3 }, i)
             .fromTo(
               screens[i],
-              { autoAlpha: 0, y: 16 },
+              { autoAlpha: 0, y: 24 },
               { autoAlpha: 1, y: 0, duration: 0.3 },
               i
             )
         })
+        tl.to({}, { duration: 0.5 }) // breathing room after the last step
       })
     },
     { scope: ref }
