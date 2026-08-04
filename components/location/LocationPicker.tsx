@@ -65,6 +65,7 @@ export default function LocationPicker({
   const [results, setResults] = useState<PlaceResult[]>([])
   const [geocoding, setGeocoding] = useState(false)
 
+
   // Two-step flow: show the saved-address list first (if there is one) and
   // only mount the pin-drop map once the user explicitly asks to add a new
   // address. Callers that never pass savedAddresses (add/edit address pages)
@@ -82,6 +83,7 @@ export default function LocationPicker({
     }
     wasOpenRef.current = open
   }, [open, hasSavedAddresses])
+
 
   // Initialise the map + draggable pin when the picker opens.
   useEffect(() => {

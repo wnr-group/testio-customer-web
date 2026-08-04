@@ -73,8 +73,8 @@ export function CookCard({ cook, showButton = true }: CookCardProps) {
         </div>
 
         {/* Card Details */}
-        <div className="p-4 flex flex-col flex-1 gap-2.5 justify-between">
-          <div className="flex flex-col gap-1.5">
+        <div className="p-4 flex flex-col flex-1 gap-4 justify-between">
+          <div className="flex flex-col gap-2">
             {/* Kitchen Name */}
             <h3 className="font-bold text-slate-800 text-base leading-snug line-clamp-1">
               {cook.kitchen_name}

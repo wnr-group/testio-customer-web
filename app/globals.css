@@ -14,6 +14,45 @@
   --color-cream:      #FFF9F2;
   --color-cream-deep: #FBEFE2;
   --color-ink-deep:   #191210;
+  --color-ink-warm:   #2A1D19; /* ambassador gradient, warm end */
+  --color-paper:      #FFFDF8; /* taped cards + polaroid stock */
+
+  /* Eco / trust green. Deliberately NOT --color-brand-success (#2DB34A),
+     which is reserved for order-status UI. */
+  --color-green-deep:   #2F6B33;
+  --color-green-forest: #25562A;
+
+  /* Warm gradient stops for the hero art panel */
+  --color-amber-mid:  #EFA23A;
+  --color-amber-deep: #DE8A1B;
+
+  /* Ambassador stage gradient */
+  --color-red-deep:   #C51A23;
+  --color-red-shadow: #8E1119;
+
+  /* Moulded-fibre packaging illustration */
+  --color-fibre-light: #E4CBA4;
+  --color-fibre-mid:   #D8B98C;
+  --color-fibre-dark:  #C2A071;
+
+  /* Marketing radii — additive, they do not shadow Tailwind's defaults */
+  --radius-pack:  1.25rem; /* 20px — packaging containers */
+  --radius-frame: 1.75rem; /* 28px — collage frame */
+  --radius-panel: 2rem;    /* 32px — hero art panel */
+
+  /* Elevation scale */
+  --shadow-card:  0 2px 8px rgb(26 26 26 / 0.06);
+  --shadow-float: 0 12px 32px rgb(26 26 26 / 0.12);
+  --shadow-panel: 0 24px 48px rgb(222 138 27 / 0.20);
+
+  /* The ambassador cut-out needs a filter shadow, not a box shadow:
+     box-shadow draws the element's rectangle, drop-shadow follows the
+     PNG's alpha silhouette. */
+  --drop-shadow-cutout: 0 24px 40px rgb(0 0 0 / 0.55);
+
+  /* Section rhythm */
+  --spacing-section:    4rem; /* 64px — mobile */
+  --spacing-section-lg: 6rem; /* 96px — desktop */
 
   /* Semantic surface colours */
   --color-bg-base:        #F7F7F7;

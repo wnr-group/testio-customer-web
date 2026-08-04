@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PublicNavbar } from '@/components/marketing/PublicNavbar'
 import { Hero } from '@/components/marketing/Hero'
+import { PackagingShowcase } from '@/components/marketing/PackagingShowcase'
 import { Marquee } from '@/components/marketing/Marquee'
 import { HowItWorks } from '@/components/marketing/HowItWorks'
 import { KitchensTeaser } from '@/components/marketing/KitchensTeaser'
@@ -23,6 +24,7 @@ export default async function RootPage() {
       <PublicNavbar />
       <main>
         <Hero />
+        <PackagingShowcase />
         <Marquee />
         <HowItWorks />
         <KitchensTeaser />

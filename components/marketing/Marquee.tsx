@@ -12,9 +12,12 @@ export function Marquee() {
 
   useGSAP(
     () => {
+      if (!ref.current) return
+      const row = ref.current.querySelector<HTMLElement>('[data-row]')
+      if (!row) return
+
       const mm = gsap.matchMedia()
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const row = ref.current!.querySelector<HTMLElement>('[data-row]')!
         const tween = gsap.to(row, { xPercent: -50, ease: 'none', duration: 22, repeat: -1 })
         const st = ScrollTrigger.create({
           onUpdate(self) {

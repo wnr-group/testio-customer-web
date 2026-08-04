@@ -48,59 +48,59 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      let { data, error } = await supabase
-        .from("users")
-        .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!data && (user.phone || user.user_metadata?.phone)) {
-        const phone = user.phone || user.user_metadata?.phone;
-        const { data: rpcData } = await supabase.rpc("ensure_customer_profile", {
-          p_phone: phone,
-        });
-
-        if (rpcData) {
-          data = rpcData as ProfileRow;
-        } else {
-          const { data: refetched } = await supabase
-            .from("users")
-            .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
-            .eq("id", user.id)
-            .maybeSingle();
-          data = refetched;
+        if (!user) {
+          router.push("/login");
+          return;
         }
-      }
 
-      if (!data && user) {
-        data = {
-          id: user.id,
-          name: user.user_metadata?.name || null,
-          phone: user.phone || user.user_metadata?.phone || "",
-          email: user.email || null,
-          avatar_url: null,
-          coin_balance: 0,
-          referral_code: null,
-        };
-      }
+        let { data, error } = await supabase
+          .from("users")
+          .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      if (data) {
-        setProfile(data);
-      } else {
-        console.error("Error loading profile:", error);
+        if (error) throw error;
+
+        if (!data && (user.phone || user.user_metadata?.phone)) {
+          const phone = user.phone || user.user_metadata?.phone;
+          const { data: rpcData, error: rpcError } = await supabase.rpc("ensure_customer_profile", {
+            p_phone: phone,
+          });
+
+          if (rpcError) {
+            console.error("Error ensuring profile:", rpcError);
+            toast.error("Failed to initialize your profile");
+            return;
+          } else if (rpcData) {
+            data = rpcData as ProfileRow;
+          } else {
+            const { data: refetched, error: refetchError } = await supabase
+              .from("users")
+              .select("id, name, phone, email, avatar_url, coin_balance, referral_code")
+              .eq("id", user.id)
+              .maybeSingle();
+            if (refetchError) throw refetchError;
+            data = refetched;
+          }
+        }
+
+        if (data) {
+          setProfile(data);
+        } else {
+          console.error("Profile not found in database");
+          toast.error("Failed to load your profile");
+        }
+      } catch (err: any) {
+        console.error("Error loading profile:", err);
         toast.error("Failed to load your profile");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     loadProfile();
@@ -214,18 +214,22 @@ export default function ProfilePage() {
               <Input
                 id="name"
                 value={displayName}
-                disabled
+                readOnly
                 className="h-10 rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+              <Label
+                htmlFor="phone"
+                className="text-xs font-bold text-slate-400 uppercase tracking-wide"
+              >
                 Phone Number
               </Label>
               <Input
+                id="phone"
                 value={userPhone}
-                disabled
+                readOnly
                 className="h-10 rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500"
               />
             </div>

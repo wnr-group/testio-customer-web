@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
@@ -11,11 +11,7 @@ import { Bell, CheckCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
 
-type NotificationLog = Database["public"]["Tables"]["notification_logs"]["Row"] & {
-  is_read?: boolean;
-  link?: string | null;
-  metadata?: { link?: string; order_id?: string; [key: string]: unknown } | null;
-};
+type NotificationLog = Database["public"]["Tables"]["notification_logs"]["Row"];
 
 const PAGE_SIZE = 20;
 
@@ -46,7 +42,7 @@ export default function NotificationsPage() {
   const [page, setPage] = useState(1);
 
   // 1. Paginated Query via useQuery (20 per page)
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["notifications", page],
     queryFn: async () => {
       const {
@@ -54,7 +50,6 @@ export default function NotificationsPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login");
         throw new Error("Not authenticated");
       }
 
@@ -77,6 +72,12 @@ export default function NotificationsPage() {
     },
   });
 
+  useEffect(() => {
+    if (isError && error?.message === "Not authenticated") {
+      router.push("/login");
+    }
+  }, [isError, error, router]);
+
   const notifications = data?.notifications || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
@@ -93,7 +94,7 @@ export default function NotificationsPage() {
 
       const { error } = await supabase
         .from("notification_logs")
-        .update({ is_read: true } as any)
+        .update({ is_read: true })
         .eq("recipient_id", user.id)
         .eq("is_read", false);
 
@@ -113,7 +114,7 @@ export default function NotificationsPage() {
     if (!notification.is_read) {
       await supabase
         .from("notification_logs")
-        .update({ is_read: true } as any)
+        .update({ is_read: true })
         .eq("id", notification.id);
 
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -121,9 +122,9 @@ export default function NotificationsPage() {
 
     const targetLink =
       notification.link ||
-      notification.metadata?.link ||
-      (notification.metadata?.order_id
-        ? `/order/${notification.metadata.order_id}`
+      (notification.metadata as Record<string, any>)?.link ||
+      ((notification.metadata as Record<string, any>)?.order_id
+        ? `/order/${(notification.metadata as Record<string, any>).order_id}`
         : null) ||
       notification.body?.match(/\/order\/[a-zA-Z0-9-]+/)?.[0] ||
       "/orders";

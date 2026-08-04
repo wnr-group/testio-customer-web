@@ -111,7 +111,7 @@ export default function OrderDetailPage() {
       } = await supabase.auth.getUser();
       if (cancelled) return;
       if (!user) {
-        router.push("/login");
+        if (!cancelled) router.push("/login");
         return;
       }
 

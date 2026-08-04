@@ -1,0 +1,5 @@
+ALTER TABLE public.notification_logs ADD COLUMN is_read boolean DEFAULT false;
+UPDATE public.notification_logs SET is_read = false WHERE is_read IS NULL;
+ALTER TABLE public.notification_logs ALTER COLUMN is_read SET NOT NULL;
+ALTER TABLE public.notification_logs ADD COLUMN link text;
+ALTER TABLE public.notification_logs ADD COLUMN metadata jsonb;
