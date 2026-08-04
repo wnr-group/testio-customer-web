@@ -40,10 +40,13 @@ export default function EditAddressPage() {
         .select("*")
         .eq("id", id)
         .eq("user_id", user.id)
+        .eq("is_deleted", false)
         .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
         console.error("Failed to load address", error);
+        setNotFound(true);
+      } else if (!data) {
         setNotFound(true);
       } else {
         setExisting(data);
@@ -65,39 +68,21 @@ export default function EditAddressPage() {
         return;
       }
 
-      let finalIsDefault = picked.isDefault;
-      if (!picked.isDefault && existing?.is_default) {
-        finalIsDefault = true;
-      }
+      // If the user is explicitly making this the new default, clear all others first.
+      // If they unchecked the default toggle but this was already the default, keep it
+      // as default to avoid leaving every address without one.
+      const wasAlreadyDefault = existing?.is_default ?? false;
+      const resolvedIsDefault = picked.isDefault || (!picked.isDefault && wasAlreadyDefault);
 
-      // Update the target address first to ensure we never leave the user without a default
-      // if a network failure happens mid-flow.
-      const { error } = await supabase
-        .from("customer_addresses")
-        .update({
-          label: picked.label,
-          address_line: picked.address,
-          lat: picked.lat,
-          lng: picked.lng,
-          is_default: finalIsDefault,
-        })
-        .eq("id", id)
-        .eq("user_id", user.id);
+      const { error } = await supabase.rpc("set_customer_address", {
+        p_address_id: id,
+        p_label: picked.label,
+        p_address_line: picked.address,
+        p_lat: picked.lat,
+        p_lng: picked.lng,
+        p_is_default: resolvedIsDefault,
+      });
       if (error) throw error;
-
-      // Only clear other defaults if we actually changed this address TO default.
-      // This avoids the unnecessary bulk clear if it was already default.
-      if (finalIsDefault && !existing?.is_default) {
-        const { error: clearError } = await supabase
-          .from("customer_addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id)
-          .neq("id", id);
-        if (clearError) {
-          console.error("Failed to clear other default addresses:", clearError);
-          // We don't throw here because the main address update succeeded.
-        }
-      }
 
       toast.success("Address updated");
       router.push("/addresses");

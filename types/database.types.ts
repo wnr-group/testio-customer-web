@@ -400,6 +400,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_default: boolean | null
+          is_deleted: boolean
           label: string
           lat: number
           lng: number
@@ -410,6 +411,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_default?: boolean | null
+          is_deleted?: boolean
           label: string
           lat: number
           lng: number
@@ -420,6 +422,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_default?: boolean | null
+          is_deleted?: boolean
           label?: string
           lat?: number
           lng?: number
@@ -1484,6 +1487,18 @@ export type Database = {
           lat: number
           lng: number
         }[]
+      }
+      get_cook_open_status: {
+        Args: { p_cook_id: string }
+        Returns: boolean
+      }
+      get_cook_phone: {
+        Args: { p_cook_id: string }
+        Returns: string | null
+      }
+      get_order_cook_phone: {
+        Args: { p_order_id: string }
+        Returns: string | null
       }
       get_delivery_order_details: {
         Args: { p_assignment_id: string }
