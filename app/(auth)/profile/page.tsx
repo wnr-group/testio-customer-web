@@ -75,6 +75,7 @@ export default function ProfilePage() {
           if (rpcError) {
             console.error("Error ensuring profile:", rpcError);
             toast.error("Failed to initialize your profile");
+            return;
           } else if (rpcData) {
             data = rpcData as ProfileRow;
           } else {

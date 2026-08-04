@@ -4,8 +4,8 @@ import { footer } from '@/lib/marketing-content'
 
 export function MarketingFooter() {
   return (
-    <footer className="bg-[#191210] px-4 pb-8 pt-16 text-white">
-      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+    <footer className="bg-[#191210] px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom,16px))] pt-24 text-white">
+      <div className="mx-auto grid max-w-6xl gap-12 md:gap-16 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Logo variant="dark" />
           <p className="mt-3 text-sm font-semibold text-[#F5A623]">{footer.tagline}</p>

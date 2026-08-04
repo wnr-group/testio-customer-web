@@ -5,7 +5,7 @@
 export const hero = {
   headline: ['Homemade.', 'Hyperlocal.', 'Made by your neighbours.'],
   underlineWord: 'Homemade.',
-  sub: 'Real home cooks. Real recipes. Cooked fresh the day you order — never before.',
+  sub: 'Real home cooks. Real recipes. Cooked fresh the day you order. Never before.',
   ctaPrimary: { label: 'Explore kitchens near you', href: '/explore' },
   ctaSecondary: { label: 'Order now', href: '/login' },
 }

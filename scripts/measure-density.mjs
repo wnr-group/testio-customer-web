@@ -9,7 +9,7 @@ const heightStr = process.argv[3] ?? '900'
 const width = Number(widthStr)
 const height = Number(heightStr)
 
-if (isNaN(width) || isNaN(height)) {
+if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
   console.error('Usage: node scripts/measure-density.mjs [width] [height]\nWidth and height must be numeric values.')
   process.exit(1)
 }

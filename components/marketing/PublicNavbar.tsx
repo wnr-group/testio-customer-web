@@ -29,10 +29,11 @@ export function PublicNavbar({ solid = false }: { solid?: boolean }) {
         solid ? 'sticky' : 'fixed',
         isSolid
           ? 'border-b border-[#1A1A1A]/5 bg-[#FFF9F2]/90 shadow-sm backdrop-blur-md'
-          : 'bg-transparent'
+          : 'bg-transparent',
+        'pt-[env(safe-area-inset-top,1rem)] md:pt-0'
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link href="/" aria-label="TESTIO home">
           <Logo />
         </Link>

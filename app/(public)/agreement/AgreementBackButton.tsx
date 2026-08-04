@@ -8,7 +8,7 @@ export function AgreementBackButton() {
   const router = useRouter();
 
   const handleBack = () => {
-    if (window.history.length > 2 || document.referrer) {
+    if (window.history.length > 2) {
       router.back();
     } else {
       router.push("/");

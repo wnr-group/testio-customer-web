@@ -81,7 +81,8 @@ export default function EditAddressPage() {
           lng: picked.lng,
           is_default: finalIsDefault,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
       if (error) throw error;
 
       // Only clear other defaults if we actually changed this address TO default.

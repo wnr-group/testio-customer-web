@@ -8,81 +8,103 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { gsap, useGSAP } from '@/lib/gsap'
+import { gsap, useGSAP, ScrollTrigger } from '@/lib/gsap'
 import { hero, heroFeatured, heroSpecial } from '@/lib/marketing-content'
 import { TrustRibbon } from '@/components/marketing/TrustRibbon'
 import { Leaf } from '@/components/marketing/icons'
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null)
+  const pinRef = useRef<HTMLDivElement>(null)
 
   useGSAP(
     () => {
+      if (!ref.current) return
+      const container = ref.current
       const mm = gsap.matchMedia()
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         // Comb underline draws on after the headline rises in.
-        const path = ref.current!.querySelector<SVGPathElement>('[data-comb] path')
+        const path = container.querySelector<SVGPathElement>('[data-comb] path')
         if (path) {
           const len = path.getTotalLength()
           gsap.set(path, { strokeDasharray: len, strokeDashoffset: len })
           gsap.to(path, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.out', delay: 0.7 })
         }
-        gsap.from('[data-hero-line]', {
-          yPercent: 110,
-          duration: 0.8,
-          stagger: 0.12,
-          ease: 'power3.out',
-        })
-        gsap.from('[data-hero-sub], [data-hero-cta], [data-hero-featured]', {
-          y: 24,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          delay: 0.5,
-          ease: 'power2.out',
-        })
-        gsap.from('[data-hero-art]', {
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          delay: 0.2,
-          ease: 'power3.out',
-        })
-        gsap.from('[data-dish]', {
-          scale: 0.7,
-          opacity: 0,
-          duration: 0.7,
-          stagger: 0.1,
-          delay: 0.55,
-          ease: 'back.out(1.6)',
-        })
+
+        const lines = container.querySelectorAll('[data-hero-line]')
+        if (lines.length > 0) {
+          gsap.from(lines, {
+            yPercent: 110,
+            duration: 0.8,
+            stagger: 0.12,
+            ease: 'power3.out',
+          })
+        }
+
+        const subCtaFeatured = container.querySelectorAll('[data-hero-sub], [data-hero-cta], [data-hero-featured]')
+        if (subCtaFeatured.length > 0) {
+          gsap.from(subCtaFeatured, {
+            y: 24,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.1,
+            delay: 0.5,
+            ease: 'power2.out',
+          })
+        }
+
+        const heroArt = container.querySelectorAll('[data-hero-art]')
+        if (heroArt.length > 0) {
+          gsap.from(heroArt, {
+            y: 40,
+            opacity: 0,
+            duration: 0.8,
+            delay: 0.2,
+            ease: 'power3.out',
+          })
+        }
+
+        const dishes = container.querySelectorAll('[data-dish]')
+        if (dishes.length > 0) {
+          gsap.from(dishes, {
+            scale: 0.7,
+            opacity: 0,
+            duration: 0.7,
+            stagger: 0.1,
+            delay: 0.55,
+            ease: 'back.out(1.6)',
+          })
+        }
       })
 
-      // Pin only where the whole composition fits the viewport. A pinned
-      // section taller than the viewport clips its own bottom, which would
-      // hide the trust ribbon.
+      // Pin only where the whole composition fits the viewport.
       mm.add(
         '(prefers-reduced-motion: no-preference) and (min-width: 768px) and (min-height: 720px)',
         () => {
+          if (!pinRef.current) return
           const tl = gsap.timeline({
             scrollTrigger: {
-              trigger: ref.current,
+              trigger: container,
               start: 'top top',
               end: '+=70%',
               scrub: true,
-              pin: true,
+              pin: pinRef.current,
             },
           })
-          gsap.utils.toArray<HTMLElement>('[data-dish]').forEach((el) => {
-            tl.to(el, { y: -Number(el.dataset.speed) * 120, ease: 'none' }, 0)
+          const dishes = container.querySelectorAll<HTMLElement>('[data-dish]')
+          dishes.forEach((el) => {
+            tl.to(el, { y: -Number(el.dataset.speed || 0) * 120, ease: 'none' }, 0)
           })
-          tl.to('[data-hero-copy]', { y: -60, ease: 'none' }, 0)
+          const heroCopy = container.querySelector('[data-hero-copy]')
+          if (heroCopy) {
+            tl.to(heroCopy, { y: -60, ease: 'none' }, 0)
+          }
         }
       )
 
       mm.add('(prefers-reduced-motion: reduce)', () => {
-        gsap.from(ref.current, { opacity: 0, duration: 0.4 })
+        gsap.from(container, { opacity: 0, duration: 0.4 })
       })
     },
     { scope: ref }
@@ -92,11 +114,14 @@ export function Hero() {
     <section
       ref={ref}
       data-hero-section
-      className="relative flex min-h-[100svh] flex-col overflow-hidden bg-cream pt-24 sm:pt-28 lg:pt-32"
     >
-      <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-6 px-3 md:grid-cols-[48%_52%] lg:gap-12">
-        {/* ---------------- left: copy, CTAs, featured cards ---------------- */}
-        <div data-hero-copy className="relative z-10 md:-mt-12 lg:-mt-20">
+      <div 
+        ref={pinRef} 
+        className="relative flex min-h-[100svh] flex-col overflow-hidden bg-cream pt-24 sm:pt-28 lg:pt-32"
+      >
+        <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-6 px-3 md:grid-cols-[48%_52%] lg:gap-12">
+          {/* ---------------- left: copy, CTAs, featured cards ---------------- */}
+        <div data-hero-copy className="relative z-10">
           <h1
             data-ink
             className="max-w-[12em] text-4xl font-extrabold leading-[0.95] tracking-tight text-text-primary sm:text-5xl lg:text-[clamp(50px,4.5vw,72px)]"
@@ -134,7 +159,7 @@ export function Hero() {
           <p
             data-hero-sub
             data-ink
-            className="mt-1 max-w-md text-base text-text-secondary md:text-xl"
+            className="mt-6 max-w-md text-xs text-text-secondary md:text-base"
           >
             {hero.sub}
           </p>
@@ -164,7 +189,7 @@ export function Hero() {
             </p>
             {/* Snap strip on phones, 4-up grid from sm. */}
             <ul className="-mx-4 mt-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0">
-              {heroFeatured.map((item) => (
+              {heroFeatured.map((item, index) => (
                 <li key={item.dish} className="group w-[9rem] shrink-0 snap-start sm:w-auto">
                   <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-text-primary/5 transition-shadow duration-300 group-hover:shadow-float">
                     <Image
@@ -173,6 +198,7 @@ export function Hero() {
                       width={240}
                       height={180}
                       sizes="(min-width: 768px) 150px, 144px"
+                      priority={index < 2}
                       className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
@@ -188,7 +214,7 @@ export function Hero() {
         <div
           data-hero-art
           data-ink
-          className="relative mx-auto w-full sm:mx-0 md:mx-0 md:-mt-12 lg:-mt-20"
+          className="relative mx-auto w-full sm:mx-0 md:mx-0"
         >
           <div className="relative aspect-square overflow-hidden rounded-panel bg-gradient-to-br from-brand-secondary via-amber-mid to-amber-deep shadow-panel">
             <div
@@ -249,6 +275,7 @@ export function Hero() {
 
       {/* bottom strip — inside the section so it lands above the fold */}
       <TrustRibbon />
+      </div>
     </section>
   )
 }

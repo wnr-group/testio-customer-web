@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Quote } from 'lucide-react'
-import { gsap, useGSAP } from '@/lib/gsap'
+import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap'
 import { ambassador } from '@/lib/marketing-content'
 import { cn } from '@/lib/utils'
 
@@ -13,82 +13,105 @@ export function AmbassadorSection() {
 
   useGSAP(
     () => {
+      if (!ref.current) return
+      const container = ref.current
       const mm = gsap.matchMedia()
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         // Entrance timeline
         const tl = gsap.timeline({
           scrollTrigger: {
-            trigger: ref.current,
+            trigger: container,
             start: 'top 75%',
           },
         })
 
         // Stagger left content
-        tl.fromTo(
-          '[data-amb-stagger]',
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: 'power3.out' }
-        )
+        const staggers = container.querySelectorAll('[data-amb-stagger]')
+        if (staggers.length > 0) {
+          tl.fromTo(
+            staggers,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: 'power3.out' }
+          )
+        }
 
         // Quote card sliding fade
-        tl.fromTo(
-          '[data-amb-quote]',
-          { x: -30, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
-          '-=0.4'
-        )
+        const quoteTargets = container.querySelectorAll('[data-amb-quote]')
+        if (quoteTargets.length > 0) {
+          tl.fromTo(
+            quoteTargets,
+            { x: -30, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
+            '-=0.4'
+          )
+        }
 
         // Background breathing glow
-        gsap.to('[data-amb-glow]', {
-          scale: 1.05,
-          opacity: 0.8,
-          duration: 4,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        })
+        const glow = container.querySelectorAll('[data-amb-glow]')
+        if (glow.length > 0) {
+          gsap.to(glow, {
+            scale: 1.05,
+            opacity: 0.8,
+            duration: 4,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+          })
+        }
 
         // Subtle circular rings parallax
-        gsap.to('[data-amb-ring]', {
-          y: -50,
-          rotation: 5,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: ref.current,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
-          }
-        })
+        const ring = container.querySelectorAll('[data-amb-ring]')
+        if (ring.length > 0) {
+          gsap.to(ring, {
+            y: -50,
+            rotation: 5,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: container,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            }
+          })
+        }
 
         // Hero image ground reveal
-        gsap.fromTo(
-          '[data-amb-hero]',
-          { y: 60, opacity: 0, scale: 0.98 },
-          { 
-            y: 0, opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out',
-            scrollTrigger: { trigger: ref.current, start: 'top 75%' }
-          }
-        )
+        const ambHero = container.querySelectorAll('[data-amb-hero]')
+        if (ambHero.length > 0) {
+          gsap.fromTo(
+            ambHero,
+            { y: 60, opacity: 0, scale: 0.98 },
+            { 
+              y: 0, opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out',
+              scrollTrigger: { trigger: container, start: 'top 75%' }
+            }
+          )
+        }
 
         // Subtle float for hero (very subtle 2-4px)
-        gsap.to('[data-amb-hero] img', {
-          y: -3,
-          duration: 3,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        })
+        const ambHeroImg = container.querySelectorAll('[data-amb-hero] img')
+        if (ambHeroImg.length > 0) {
+          gsap.to(ambHeroImg, {
+            y: -3,
+            duration: 3,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+          })
+        }
 
         // Float and reveal achievement cards
-        gsap.fromTo(
-          '[data-amb-card]',
-          { y: 40, opacity: 0 },
-          {
-            y: 0, opacity: 1, stagger: 0.15, duration: 1, ease: 'power3.out',
-            scrollTrigger: { trigger: ref.current, start: 'top 60%' }
-          }
-        )
+        const cards = container.querySelectorAll('[data-amb-card]')
+        if (cards.length > 0) {
+          gsap.fromTo(
+            cards,
+            { y: 40, opacity: 0 },
+            {
+              y: 0, opacity: 1, stagger: 0.15, duration: 1, ease: 'power3.out',
+              scrollTrigger: { trigger: container, start: 'top 60%' }
+            }
+          )
+        }
       })
     },
     { scope: ref }
@@ -156,26 +179,18 @@ export function AmbassadorSection() {
               return (
                 <div 
                   key={stat.label}
-                  className="group relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-border-color bg-surface p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-md"
+                  className="group relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-black/5 bg-white p-5 text-center shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-md"
                 >
                   {/* Subtle highlight */}
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-black/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/[0.03] text-2xl transition-transform duration-300 group-hover:scale-110">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-black/[0.03] text-2xl transition-transform duration-300 group-hover:scale-110">
                     {stat.value === '🇮🇳' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" className="h-6 w-9 rounded-sm shadow-sm">
-                        <rect width="900" height="200" fill="#FF9933"/>
-                        <rect y="200" width="900" height="200" fill="#FFFFFF"/>
-                        <rect y="400" width="900" height="200" fill="#138808"/>
-                        <circle cx="450" cy="300" r="80" fill="none" stroke="#000080" strokeWidth="12"/>
-                        <circle cx="450" cy="300" r="16" fill="#000080"/>
-                        <g stroke="#000080" strokeWidth="8">
-                          <line x1="450" y1="220" x2="450" y2="380"/>
-                          <line x1="370" y1="300" x2="530" y2="300"/>
-                          <line x1="393.4" y1="243.4" x2="506.6" y2="356.6"/>
-                          <line x1="393.4" y1="356.6" x2="506.6" y2="243.4"/>
-                        </g>
-                      </svg>
+                      <img 
+                        src="https://flagcdn.com/w160/in.png" 
+                        alt="India Flag" 
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       stat.value
                     )}
