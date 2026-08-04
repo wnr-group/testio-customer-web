@@ -42,14 +42,15 @@ export function LoginPromptSheet({ dish, open, onClose }: Props) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+            data-touch-target="login-prompt-close"
+            className="rounded-full p-3.5 text-slate-400 hover:bg-slate-100 sm:p-1"
           >
             <X className="size-5" />
           </button>
         </div>
         <h3 className="mt-5 text-lg font-extrabold text-slate-900">Sign in to start your order</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Quick OTP login — this dish will be waiting in your cart.
+          Quick OTP login. This dish will be waiting in your cart.
         </p>
         <Link
           href={`/login?next=${encodeURIComponent(pathname)}`}

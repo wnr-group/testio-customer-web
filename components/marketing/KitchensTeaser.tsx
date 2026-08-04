@@ -43,20 +43,21 @@ export function KitchensTeaser() {
   }, [location])
 
   return (
-    <section className="bg-[#FFF9F2] px-4 py-20">
+    <section className="bg-[#FFF9F2] px-4 py-12 md:py-20">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight text-[#1A1A1A] md:text-4xl">
               {kitchensTeaser.heading}
             </h2>
-            <p className="mt-2 text-sm text-[#666]">
+            <p data-body-text="kitchens-sub" className="mt-2 text-base text-[#666] sm:text-sm">
               {location ? `Near ${location.label}` : kitchensTeaser.sub}
             </p>
           </div>
           <Link
             href={kitchensTeaser.seeAll.href}
-            className="inline-flex items-center gap-1 text-sm font-bold text-[#E8202A] hover:underline"
+            data-touch-target="kitchens-see-all"
+            className="inline-flex items-center gap-1 py-3.5 -my-3.5 text-sm font-bold text-[#E8202A] hover:underline"
           >
             {kitchensTeaser.seeAll.label} <ArrowRight className="size-4" />
           </Link>
@@ -69,7 +70,7 @@ export function KitchensTeaser() {
               {permission === 'denied' ? (
                 <>
                   <p className="font-bold text-[#1A1A1A]">Location is blocked in your browser</p>
-                  <p className="max-w-md text-sm text-[#666]">
+                  <p className="max-w-md text-base text-[#666] sm:text-sm">
                     Enable it in your browser&apos;s site settings, or search your area below.
                   </p>
                 </>
@@ -80,7 +81,8 @@ export function KitchensTeaser() {
                     type="button"
                     onClick={useMyLocation}
                     disabled={locating}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#E8202A] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#c71821] disabled:opacity-60"
+                    data-touch-target="kitchens-use-location"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#E8202A] px-6 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#c71821] disabled:opacity-60 sm:py-2.5"
                   >
                     <LocateFixed className="size-4" /> {locating ? 'Locating…' : 'Use my location'}
                   </button>
@@ -102,7 +104,7 @@ export function KitchensTeaser() {
               <p className="font-bold text-[#1A1A1A]">
                 We&apos;re not cooking around {location.label} yet
               </p>
-              <p className="mt-1 text-sm text-[#666]">We&apos;re growing fast — try another area:</p>
+              <p className="mt-1 text-base text-[#666] sm:text-sm">We&apos;re growing fast! Try another area:</p>
               <div className="mx-auto mt-4 max-w-md">
                 <LocationSearchBox onPick={setManualLocation} />
               </div>

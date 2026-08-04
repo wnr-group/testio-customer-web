@@ -7,7 +7,7 @@ const SECTIONS = [
   },
   {
     title: "2. What TESTIO Is",
-    body: "TESTIO connects customers with independent home cooks in their neighbourhood for daily home-cooked meals. TESTIO facilitates discovery, ordering, and payment — the food itself is prepared and fulfilled by the individual cook, not by TESTIO.",
+    body: "TESTIO connects customers with independent home cooks in their neighbourhood for daily home-cooked meals. TESTIO facilitates discovery, ordering, and payment; the food itself is prepared and fulfilled by the individual cook, not by TESTIO.",
   },
   {
     title: "3. Accounts & Verification",
@@ -53,7 +53,7 @@ export default function AgreementPage() {
           Terms &amp; Agreement
         </h1>
         <p className="mt-2 text-xs font-semibold text-slate-400">
-          Last updated: 2026 · Draft copy — pending legal review
+          Last updated: 2026 · Draft copy (pending legal review)
         </p>
 
         <div className="mt-8 flex flex-col gap-6 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-6 md:p-8">

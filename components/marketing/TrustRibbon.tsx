@@ -22,8 +22,8 @@ export function TrustRibbon() {
                 <Icon aria-hidden className="size-5 text-brand-secondary" strokeWidth={2} />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-bold text-paper">{item.title}</span>
-                <span className="block truncate text-xs text-paper/70">{item.sub}</span>
+                <span className="block text-sm font-bold leading-snug text-paper">{item.title}</span>
+                <span className="block text-xs leading-snug text-paper/70">{item.sub}</span>
               </span>
             </li>
           )
