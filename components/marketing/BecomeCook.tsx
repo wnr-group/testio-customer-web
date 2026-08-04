@@ -13,8 +13,12 @@ export function BecomeCook() {
           </h2>
           <p className="mt-3 text-base font-semibold text-[#1A1A1A]/70">{becomeCook.sub}</p>
           <ul className="mt-6 flex flex-col gap-3">
-            {becomeCook.points.map((point) => (
-              <li key={point} className="flex items-center gap-2.5 text-sm font-semibold text-[#1A1A1A]">
+            {becomeCook.points.map((point, i) => (
+              <li
+                key={point}
+                data-body-text={i === 0 ? 'becomecook-point' : undefined}
+                className="flex items-center gap-2.5 text-base font-semibold text-[#1A1A1A] sm:text-sm"
+              >
                 <CheckCircle2 className="size-5 shrink-0 text-[#E8202A]" /> {point}
               </li>
             ))}

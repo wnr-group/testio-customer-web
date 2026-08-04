@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "visual:capture": "node scripts/visual-capture.mjs",
-    "visual:measure": "node scripts/measure-density.mjs"
+    "visual:measure": "node scripts/measure-density.mjs",
+    "verify:responsive": "node scripts/verify-responsive.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

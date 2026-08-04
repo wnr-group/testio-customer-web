@@ -42,7 +42,7 @@ export function LocationSearchBox({
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center gap-2 rounded-xl border border-[#1A1A1A]/10 bg-white px-3 shadow-sm">
+      <div data-touch-target="location-search-input" className="flex items-center gap-2 rounded-xl border border-[#1A1A1A]/10 bg-white px-3 shadow-sm">
         <Search className="size-4 shrink-0 text-[#1A1A1A]/40" />
         <input
           value={query}
@@ -50,7 +50,7 @@ export function LocationSearchBox({
           placeholder={placeholder}
           autoFocus={autoFocus}
           aria-label="Search your location"
-          className="w-full bg-transparent py-2.5 text-sm text-[#1A1A1A] outline-none placeholder:text-[#1A1A1A]/40"
+          className="w-full bg-transparent py-3.5 text-base text-[#1A1A1A] outline-none placeholder:text-[#1A1A1A]/40 sm:py-2.5 sm:text-sm"
         />
       </div>
       {results.length > 0 && (
@@ -60,7 +60,7 @@ export function LocationSearchBox({
               key={`${r.lat}-${r.lng}-${i}`}
               type="button"
               onClick={() => pick(r)}
-              className="flex w-full items-start gap-2 px-4 py-2.5 text-left text-sm text-[#1A1A1A]/80 hover:bg-[#FFF9F2]"
+              className="flex w-full items-start gap-2 px-4 py-3.5 text-left text-sm text-[#1A1A1A]/80 hover:bg-[#FFF9F2] sm:py-2.5"
             >
               <MapPin className="mt-0.5 size-4 shrink-0 text-[#1A1A1A]/40" />
               <span className="line-clamp-2">{r.name}</span>

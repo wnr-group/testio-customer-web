@@ -98,3 +98,55 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-poppins), Poppins, sans-serif;
 }
+
+@keyframes amb-card-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 0.4375rem));
+  }
+}
+
+.animate-amb-scroll {
+  animation: amb-card-scroll 18s linear infinite;
+}
+
+.animate-amb-scroll:hover,
+.animate-amb-scroll:active,
+.animate-amb-scroll.is-paused,
+.animate-amb-scroll[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-amb-scroll {
+    animation: none;
+  }
+}
+
+@keyframes hero-featured-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 0.75rem));
+  }
+}
+
+.animate-hero-featured-scroll {
+  animation: hero-featured-scroll 18s linear infinite;
+}
+
+.animate-hero-featured-scroll:hover,
+.animate-hero-featured-scroll:active,
+.animate-hero-featured-scroll.is-paused,
+.animate-hero-featured-scroll[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-featured-scroll {
+    animation: none;
+  }
+}

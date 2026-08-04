@@ -61,7 +61,7 @@ export const packaging = {
   heading: 'Eco-friendly packaging',
   sub: 'Designed for freshness. Better for nature.',
   benefits:
-    'Every TESTIO order travels in areca-leaf and moulded-fibre containers — sturdy enough for gravy, warm enough to arrive fresh, and gentle enough to return to the soil they came from.',
+    'Every TESTIO order travels in areca-leaf and moulded-fibre containers, sturdy enough for gravy, warm enough to arrive fresh, and gentle enough to return to the soil they came from.',
   features: [
     { label: '100% Natural', icon: 'leaf' },
     { label: 'Biodegradable', icon: 'recycle' },
@@ -81,7 +81,7 @@ export const howItWorks = {
   steps: [
     {
       title: 'Find a home cook',
-      body: "Browse real kitchens near you — today's menu, ratings and distance, all upfront.",
+      body: "Browse real kitchens near you: today's menu, ratings and distance, all upfront.",
       screen: '/marketing/screen-explore.jpg',
     },
     {
@@ -91,7 +91,7 @@ export const howItWorks = {
     },
     {
       title: 'Fresh at your door',
-      body: 'Pick it up hot or get it delivered — made today, never reheated.',
+      body: 'Pick it up hot or get it delivered, made today, never reheated.',
       screen: '/marketing/screen-kitchen.jpg',
     },
   ],
@@ -99,7 +99,7 @@ export const howItWorks = {
 
 export const kitchensTeaser = {
   heading: 'Cooking near you right now',
-  sub: 'These are real TESTIO kitchens — live menus, live ratings.',
+  sub: 'These are real TESTIO kitchens, with live menus and live ratings.',
   seeAll: { label: 'See all kitchens', href: '/explore' },
 }
 
@@ -110,12 +110,12 @@ export const ambassador = {
   eyebrow: 'Our brand ambassador',
   heading: 'Strength you can taste.',
   title: 'International gold medalist in powerlifting',
-  body: "Champions don't leave their fuel to chance. Our ambassador — an international gold medalist proudly lifting for India — backs food that's honest: home-cooked, fresh, made with care.",
+  body: "Champions don't leave their fuel to chance. Our ambassador, an international gold medalist proudly lifting for India, backs food that's honest: home-cooked, fresh, made with care.",
   // Derived ONLY from `title` and `body` above. Do not add achievement
   // claims here that aren't already confirmed copy.
   stats: [
-    { value: '🥇', label: 'International Gold Medalist' },
     { value: '🇮🇳', label: 'Representing India' },
+    { value: '🥇', label: 'International Gold Medalist' },
     { value: '🍲', label: 'Powered by Homemade Food' },
   ],
   // Null until a real, attributable quote is confirmed. Attributing an
@@ -137,10 +137,10 @@ export const becomeCook = {
   sub: 'Turn your kitchen into a business with TESTIO.',
   points: [
     'Set your own menu, prices and hours',
-    'Orders are prepaid — no chasing payments',
+    'Orders are prepaid with no chasing payments',
     'We bring you customers nearby',
   ],
-  cta: 'Become a Cook — get the TESTIO Cook app',
+  cta: 'Become a Cook, get the TESTIO Cook app',
 }
 
 export const footer = {
