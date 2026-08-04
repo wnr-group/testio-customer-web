@@ -6,7 +6,7 @@
 
 import { useRef } from 'react'
 import Image from 'next/image'
-import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap'
+import { gsap, useGSAP } from '@/lib/gsap'
 import { howItWorks } from '@/lib/marketing-content'
 
 export function HowItWorks() {
@@ -18,12 +18,12 @@ export function HowItWorks() {
       if (!ref.current || !pinRef.current) return
       const container = ref.current
       const mm = gsap.matchMedia()
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
+      mm.add('(prefers-reduced-motion: no-preference) and (min-width: 768px)', () => {
         const steps = Array.from(container.querySelectorAll<HTMLElement>('[data-step]'))
         const screens = Array.from(container.querySelectorAll<HTMLElement>('[data-screen]'))
         if (steps.length === 0 || screens.length === 0) return
 
-        gsap.set(steps.slice(1), { opacity: 0.5 })
+        gsap.set(steps.slice(1), { opacity: 0.25 })
         gsap.set(screens.slice(1), { autoAlpha: 0 })
 
         const tl = gsap.timeline({
@@ -37,17 +37,16 @@ export function HowItWorks() {
         })
         steps.forEach((_, i) => {
           if (i === 0) return
-          tl.to(steps[i - 1], { opacity: 0.5, duration: 0.3 }, i)
+          tl.to(steps[i - 1], { opacity: 0.25, duration: 0.3 }, i)
             .to(steps[i], { opacity: 1, duration: 0.3 }, i)
             .to(screens[i - 1], { autoAlpha: 0, y: -16, duration: 0.3 }, i)
             .fromTo(
               screens[i],
-              { autoAlpha: 0, y: 24 },
+              { autoAlpha: 0, y: 16 },
               { autoAlpha: 1, y: 0, duration: 0.3 },
               i
             )
         })
-        tl.to({}, { duration: 0.5 }) // breathing room after the last step
       })
     },
     { scope: ref }
@@ -55,7 +54,7 @@ export function HowItWorks() {
 
   return (
     <section ref={ref}>
-      <div ref={pinRef} className="flex min-h-screen items-center bg-white px-4 py-20 w-full">
+      <div ref={pinRef} data-howitworks-pin className="flex md:min-h-screen items-center bg-white px-4 py-20 w-full">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight text-[#1A1A1A] md:text-5xl">
@@ -69,7 +68,7 @@ export function HowItWorks() {
                   </span>
                   <div>
                     <h3 className="text-lg font-bold text-[#1A1A1A]">{step.title}</h3>
-                    <p className="mt-1 max-w-sm text-sm text-[#666]">{step.body}</p>
+                    <p className="mt-1 max-w-sm text-base text-[#666] sm:text-sm">{step.body}</p>
                   </div>
                 </li>
               ))}
@@ -79,20 +78,19 @@ export function HowItWorks() {
           {/* Phone frame with real app screenshots */}
           <div className="relative mx-auto hidden aspect-[9/19] w-64 md:block lg:w-72">
             <div className="absolute inset-0 rounded-[2.8rem] border-[10px] border-[#1A1A1A] bg-[#1A1A1A] shadow-2xl">
+              <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#1A1A1A]" />
               <div className="relative h-full w-full overflow-hidden rounded-[2.2rem] bg-white">
-                <div className="absolute inset-x-0 bottom-0 top-6">
-                  {howItWorks.steps.map((step) => (
-                    <Image
-                      key={step.screen}
-                      data-screen
-                      src={step.screen}
-                      alt={`TESTIO app — ${step.title}`}
-                      fill
-                      sizes="288px"
-                      className="object-cover object-top"
-                    />
-                  ))}
-                </div>
+                {howItWorks.steps.map((step) => (
+                  <Image
+                    key={step.screen}
+                    data-screen
+                    src={step.screen}
+                    alt={`TESTIO app — ${step.title}`}
+                    fill
+                    sizes="288px"
+                    className="object-cover object-top"
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -101,3 +99,4 @@ export function HowItWorks() {
     </section>
   )
 }
+

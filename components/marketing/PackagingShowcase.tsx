@@ -62,7 +62,7 @@ export function PackagingShowcase() {
           </div>
 
           <div>
-            <p className="max-w-lg text-sm leading-relaxed text-text-secondary">
+            <p data-body-text="packaging-benefits" className="max-w-lg text-base leading-relaxed text-text-secondary sm:text-sm">
               {packaging.benefits}
             </p>
 

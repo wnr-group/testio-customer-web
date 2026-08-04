@@ -357,7 +357,7 @@ function HomeContent() {
                 </span>
                 <p className="text-slate-800 font-semibold text-sm truncate">{location.label}</p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  {cooks.length} {cooks.length === 1 ? "kitchen" : "kitchens"} within 10 km. Blue dot is you; red pins are cooks — tap a pin to view their profile or menu.
+                  {cooks.length} {cooks.length === 1 ? "kitchen" : "kitchens"} within 10 km. Blue dot is you; red pins are cooks. Tap a pin to view their profile or menu.
                 </p>
               </div>
             )}

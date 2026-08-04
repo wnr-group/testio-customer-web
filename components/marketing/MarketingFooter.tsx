@@ -4,24 +4,25 @@ import { footer } from '@/lib/marketing-content'
 
 export function MarketingFooter() {
   return (
-    <footer className="bg-[#191210] px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom,16px))] pt-24 text-white">
-      <div className="mx-auto grid max-w-6xl gap-12 md:gap-16 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+    <footer className="bg-[#191210] px-4 pt-24 md:pt-16 pb-[calc(2.5rem+env(safe-area-inset-bottom,16px))] md:pb-8 text-white">
+      <div className="mx-auto grid max-w-6xl gap-12 md:gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Logo variant="dark" />
           <p className="mt-3 text-sm font-semibold text-[#F5A623]">{footer.tagline}</p>
           <p className="mt-4 max-w-xs text-xs leading-relaxed text-white/50">{footer.trust}</p>
         </div>
-        {footer.columns.map((col) => (
+        {footer.columns.map((col, colIndex) => (
           <nav key={col.heading} aria-label={col.heading}>
             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
               {col.heading}
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5">
-              {col.links.map((link) => (
+              {col.links.map((link, linkIndex) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 transition-colors hover:text-white"
+                    data-touch-target={colIndex === 0 && linkIndex === 0 ? 'footer-link' : undefined}
+                    className="block py-2 text-sm text-white/70 transition-colors hover:text-white sm:py-0"
                   >
                     {link.label}
                   </Link>
@@ -40,7 +41,7 @@ export function MarketingFooter() {
                 key={store}
                 className="w-44 rounded-xl border border-white/15 px-4 py-2.5 text-xs font-semibold text-white/50"
               >
-                {store} — coming soon
+                {store} (coming soon)
               </span>
             ))}
           </div>

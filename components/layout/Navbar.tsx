@@ -97,6 +97,7 @@ export function Navbar() {
                 {/* Navigation Links */}
                 <nav className="flex flex-col gap-4">
                   <SheetClose
+                    nativeButton={false}
                     render={
                       <Link
                         href="/home"
@@ -108,6 +109,7 @@ export function Navbar() {
                   </SheetClose>
 
                   <SheetClose
+                    nativeButton={false}
                     render={
                       <Link
                         href="/orders"
@@ -119,6 +121,7 @@ export function Navbar() {
                   </SheetClose>
 
                   <SheetClose
+                    nativeButton={false}
                     render={
                       <Link
                         href="/profile"
