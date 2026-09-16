@@ -1,8 +1,8 @@
 "use client";
 
-import { useSyncExternalStore, useState, useEffect } from "react";
+import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ShoppingCart, User, Menu, Bell, LogOut } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -28,33 +28,75 @@ export function Navbar() {
   );
   const clearAuthStore = useAuthStore((s) => s.clear);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    async function fetchUnreadNotifications() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
+  const fetchUnreadNotifications = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) return;
 
-        const { count, error } = await supabase
-          .from("notification_logs")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("is_read", false);
+      const { count, error } = await supabase
+        .from("notification_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("is_read", false);
 
-        if (!error && count !== null) {
-          setUnreadCount(count);
-        }
-      } catch (err) {
-        console.error("Error fetching unread notifications count:", err);
+      if (error) {
+        console.error("Failed to fetch unread notifications count:", error);
+        return;
       }
+
+      if (count !== null) {
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("Error fetching unread notifications count:", err);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchUnreadNotifications();
+  }, [fetchUnreadNotifications, pathname]);
+
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function setupRealtime() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel(`unread-notifications-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "notification_logs",
+            filter: `recipient_id=eq.${user.id}`,
+          },
+          () => {
+            fetchUnreadNotifications();
+          }
+        )
+        .subscribe();
     }
 
-    fetchUnreadNotifications();
-  }, [supabase]);
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [supabase, fetchUnreadNotifications]);
 
   const mounted = useSyncExternalStore(
     emptySubscribe,
