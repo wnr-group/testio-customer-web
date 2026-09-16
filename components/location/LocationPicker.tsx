@@ -132,8 +132,15 @@ export default function LocationPicker({
     };
   }, [open, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const isSelectingRef = useRef(false)
+
   // Debounced place search.
   useEffect(() => {
+    if (isSelectingRef.current) {
+      isSelectingRef.current = false
+      return
+    }
+
     let active = true;
 
     if (!query.trim()) {
@@ -156,6 +163,7 @@ export default function LocationPicker({
   }, [query]);
 
   const pickResult = (r: PlaceResult) => {
+    isSelectingRef.current = true;
     setQuery(r.name);
     setResults([]);
     setAddress(r.name);
@@ -239,7 +247,10 @@ export default function LocationPicker({
             <Search className="size-4 text-slate-400 shrink-0" />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                isSelectingRef.current = false;
+                setQuery(e.target.value);
+              }}
               placeholder="Search area, locality, landmark…"
               className="w-full bg-transparent outline-none text-sm py-2.5 text-slate-800 placeholder:text-slate-400"
             />
