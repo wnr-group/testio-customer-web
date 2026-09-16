@@ -48,19 +48,10 @@ export function DishCard({ dish }: DishCardProps) {
   const cartItem = cartItems.find((i) => i.dishId === dish.id);
   const qty = cartItem ? cartItem.qty : 0;
 
-  const isNonVeg = /(chicken|fish|meat|mutton|beef|egg|pork|shrimp|prawn|crab|lamb|keema|bacon|salami|momo)/i.test(
-    `${dish.name} ${dish.description || ""}`
-  );
   const isVeg = dish.dietary_status
     ? !dish.dietary_status.toLowerCase().includes("non") &&
       dish.dietary_status.toLowerCase().includes("veg")
-    : !isNonVeg;
-
-  const displayStatus = dish.dietary_status
-    ? dish.dietary_status.toUpperCase()
-    : isVeg
-    ? "VEG"
-    : "NON-VEG";
+    : null;
 
   const handleAdd = async () => {
     const kitchenName = dish.cook_profiles?.kitchen_name || "Home Cook";
@@ -144,20 +135,22 @@ const confirmAndAddItem = (kitchenName: string) => {
           }}
         />
         {/* Capsule Veg / Non-Veg Indicator Badge */}
-        <div className="absolute top-3 left-3 bg-white/95 px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1.5 border border-slate-100">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              isVeg ? "bg-[#2DB34A]" : "bg-[#D32F2F]"
-            }`}
-          />
-          <span
-            className={`text-[9px] font-extrabold ${
-              isVeg ? "text-[#2DB34A]" : "text-[#D32F2F]"
-            }`}
-          >
-            {displayStatus}
-          </span>
-        </div>
+        {isVeg !== null && (
+          <div className="absolute top-3 left-3 bg-white/95 px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1.5 border border-slate-100">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isVeg ? "bg-[#2DB34A]" : "bg-[#D32F2F]"
+              }`}
+            />
+            <span
+              className={`text-[9px] font-extrabold ${
+                isVeg ? "text-[#2DB34A]" : "text-[#D32F2F]"
+              }`}
+            >
+              {isVeg ? "VEG" : "NON-VEG"}
+            </span>
+          </div>
+        )}
       </div>
       {/* Card Details */}
       <div className="p-4 flex flex-col flex-1 gap-2.5 justify-between">
