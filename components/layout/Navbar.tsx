@@ -1,9 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ShoppingCart, User, Menu } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { ShoppingCart, User, Menu, Bell, LogOut } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import { createClient } from "@/lib/supabase/client";
@@ -18,7 +18,6 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet'
-import { LogOut } from 'lucide-react' // Import LogOut icon
 
 const emptySubscribe = () => () => {};
 
@@ -29,7 +28,76 @@ export function Navbar() {
   );
   const clearAuthStore = useAuthStore((s) => s.clear);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadNotifications = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) return;
+
+      const { count, error } = await supabase
+        .from("notification_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("is_read", false);
+
+      if (error) {
+        console.error("Failed to fetch unread notifications count:", error);
+        return;
+      }
+
+      if (count !== null) {
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("Error fetching unread notifications count:", err);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchUnreadNotifications();
+  }, [fetchUnreadNotifications, pathname]);
+
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function setupRealtime() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel(`unread-notifications-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "notification_logs",
+            filter: `recipient_id=eq.${user.id}`,
+          },
+          () => {
+            fetchUnreadNotifications();
+          }
+        )
+        .subscribe();
+    }
+
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [supabase, fetchUnreadNotifications]);
+
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -62,6 +130,20 @@ export function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
+          {/* Notifications */}
+          <Link
+            href="/notifications"
+            aria-label="Notifications"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
+          >
+            <Bell className="size-5" />
+            {mounted && unreadCount > 0 && (
+              <span className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[red] text-[10px] font-bold text-white shadow-sm">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Link>
+
           {/* Cart */}
           <Link href="/cart" aria-label="Shopping Cart" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}>
             <ShoppingCart className="size-5" />
@@ -118,6 +200,23 @@ export function Navbar() {
                     }
                   >
                     My Orders
+                  </SheetClose>
+
+                  <SheetClose
+                    nativeButton={false}
+                    render={
+                      <Link
+                        href="/notifications"
+                        className="flex items-center justify-between text-base font-medium text-[--color-text-secondary] hover:text-[--color-brand-primary] py-2 transition-colors"
+                      />
+                    }
+                  >
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-600 rounded-full">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </SheetClose>
 
                   <SheetClose
