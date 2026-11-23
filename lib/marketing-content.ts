@@ -157,7 +157,10 @@ export const footer = {
     },
     {
       heading: 'Company',
-      links: [{ label: 'Terms & agreement', href: '/agreement' }],
+      links: [
+        { label: 'Terms & agreement', href: '/agreement' },
+        { label: 'Privacy Policy', href: '/privacy-policy' },
+      ],
     },
   ],
   legal: `© ${new Date().getFullYear()} Testio Hospitality Service. All rights reserved.`,
