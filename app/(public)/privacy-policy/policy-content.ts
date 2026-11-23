@@ -15,6 +15,7 @@ export type PolicyBlock =
   | { kind: "p"; text: string }
   | { kind: "ul"; items: string[] }
   | { kind: "emailLine"; lead: string }
+  | { kind: "internalLink"; lead: string; label: string; href: string }
   | { kind: "contact" };
 
 export type PolicySection = {
@@ -170,6 +171,12 @@ export const SECTIONS: PolicySection[] = [
       {
         kind: "emailLine",
         lead: "To make a request, email us at",
+      },
+      {
+        kind: "internalLink",
+        lead: "To request deletion of your account, see our",
+        label: "Account Deletion page",
+        href: "/delete-account",
       },
       {
         kind: "p",

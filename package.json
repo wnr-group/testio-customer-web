@@ -10,7 +10,8 @@
     "visual:capture": "node scripts/visual-capture.mjs",
     "visual:measure": "node scripts/measure-density.mjs",
     "verify:responsive": "node scripts/verify-responsive.mjs",
-    "verify:privacy": "node scripts/verify-privacy-policy.mjs"
+    "verify:privacy": "node scripts/verify-privacy-policy.mjs",
+    "verify:delete-account": "node scripts/verify-delete-account.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
