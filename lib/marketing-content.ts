@@ -160,6 +160,7 @@ export const footer = {
       links: [
         { label: 'Terms & agreement', href: '/agreement' },
         { label: 'Privacy Policy', href: '/privacy-policy' },
+        { label: 'Account Deletion', href: '/delete-account' },
       ],
     },
   ],

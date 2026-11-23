@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PublicNavbar } from "@/components/marketing/PublicNavbar";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import {
@@ -46,6 +47,19 @@ function Block({ block }: { block: PolicyBlock }) {
       return (
         <p className={BODY}>
           {block.lead} <EmailLink />.
+        </p>
+      );
+    case "internalLink":
+      return (
+        <p className={BODY}>
+          {block.lead}{" "}
+          <Link
+            href={block.href}
+            className={`${LINK} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8161F] focus-visible:ring-offset-2 rounded-sm`}
+          >
+            {block.label}
+          </Link>
+          .
         </p>
       );
     case "contact":
