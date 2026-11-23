@@ -81,7 +81,7 @@ export const SECTIONS: PolicySection[] = [
       },
       {
         kind: "p",
-        text: "Our website and app do not include advertising or analytics tools, and we do not use your information for advertising.",
+        text: "We have not added advertising or analytics tools of our own to our website or app, and we do not use your information for advertising.",
       },
     ],
   },
@@ -103,7 +103,7 @@ export const SECTIONS: PolicySection[] = [
       },
       {
         kind: "p",
-        text: "We do not use advertising or analytics cookies. You can clear cookies and site data in your browser settings at any time, but you may then be signed out and your cart may be emptied.",
+        text: "We do not set advertising or analytics cookies ourselves. You can clear cookies and site data in your browser settings at any time, but you may then be signed out and your cart may be emptied.",
       },
     ],
   },
@@ -133,7 +133,7 @@ export const SECTIONS: PolicySection[] = [
       },
       {
         kind: "p",
-        text: "We take reasonable steps to protect your information, including sign-in by OTP and limiting who can access your account data. Please keep your OTP private and do not share it with anyone.",
+        text: "We take reasonable steps to protect your information, and your account is protected by sign-in with an OTP. Please keep your OTP private and do not share it with anyone.",
       },
       {
         kind: "p",
